@@ -1,5 +1,8 @@
 # 치지직 도구모음
 
+## Dependencies 설치
+pip install -r requirements.txt
+
 ## 환경 변수 설정
 
 이 프로젝트를 실행하려면, 프로젝트 루트 디렉토리의 `env` 폴더에 `.env` 파일을 생성하고, 아래 예시와 같이 환경 변수를 입력해주세요.
