@@ -16,7 +16,7 @@ class NicoChat:
     async def splash_chat(self, message: str, user_name: str, color: int) -> None:
         try:
             # deepcopy
-            input_settings: Dict[str, Any] = deepcopy(const.NICO_TEXT_SETTINGS)
+            input_settings: Dict[str, Any] = deepcopy(const.NicoChat.TEXT_SETTINGS)
             input_settings["text"] = message
             input_settings["color"] = color
             input_kind: str = "text_gdiplus_v2"
@@ -32,8 +32,8 @@ class NicoChat:
 
             item_id: int = getattr(response, "scene_item_id")
             print(f"Created item {item_id}: {message}")
-            initial_x: int = const.SCREEN.WIDTH
-            initial_y: int = random.randint(0, const.SCREEN.HEIGHT // 2)
+            initial_x: int = const.Screen.WIDTH
+            initial_y: int = random.randint(0, const.Screen.HEIGHT // 2)
 
             self.client.set_scene_item_transform(scene_name=scene_name, item_id=item_id, transform={
                 "positionX": initial_x,

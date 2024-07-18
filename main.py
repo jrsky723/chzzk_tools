@@ -1,14 +1,13 @@
 from dotenv import load_dotenv
 import os
-import constants as const
 import obsws_python as obs
 from chzzk.chat_client import ChatClient
 from obs.nico_chat import NicoChat
 from youtube_player.youtube_player import YoutubePlayer
+from constants.common import Path as CommonPath
 
 def main():
-    load_dotenv(dotenv_path=const.DOTENV_PATH)
-
+    load_dotenv(dotenv_path=CommonPath.DOTENV_PATH)
     # 환경 변수 로드
     CHANNEL_ID = str(os.getenv("CHANNEL_ID"))
     NID_AUT = str(os.getenv("NID_AUT"))
