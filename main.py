@@ -2,45 +2,31 @@ from dotenv import load_dotenv
 import os
 import constants as const
 import obsws_python as obs
-from chzzkpy.chat import ChatClient, ChatMessage, DonationMessage
+from chzzk.chat_client import ChatClient
 from obs.nico_chat import NicoChat
+from youtube_player.youtube_player import YoutubePlayer
 
-load_dotenv(dotenv_path=const.DOTENV_PATH)
+def main():
+    load_dotenv(dotenv_path=const.DOTENV_PATH)
 
-# get environment variables
-CHANNEL_ID = os.getenv("CHANNEL_ID")
-NID_AUT = os.getenv("NID_AUT")
-NID_SES = os.getenv("NID_SES")
-OBS_HOST = os.getenv('OBS_HOST')
-OBS_PORT = int(os.getenv('OBS_PORT'))
-OBS_PASSWORD = os.getenv('OBS_PASSWORD')
+    # 환경 변수 로드
+    CHANNEL_ID = str(os.getenv("CHANNEL_ID"))
+    NID_AUT = str(os.getenv("NID_AUT"))
+    NID_SES = str(os.getenv("NID_SES"))
+    OBS_HOST = str(os.getenv('OBS_HOST'))
+    
+    OBS_PORT = int(str(os.getenv('OBS_PORT')))
+    OBS_PASSWORD = str(os.getenv('OBS_PASSWORD'))
+    YOUTUBE_DATA_API_KEY = str(os.getenv('YOUTUBE_DATA_API_KEY'))
 
-# create clients
-chzzk_cl = ChatClient(CHANNEL_ID)
+    # 클라이언트 생성
+    obs_cl = obs.ReqClient(host=OBS_HOST, port=OBS_PORT, password=OBS_PASSWORD)
+    nico_chat = NicoChat(obs_cl)
+    youtube_player = YoutubePlayer(obs_cl, YOUTUBE_DATA_API_KEY)
+    chzzk_cl = ChatClient(CHANNEL_ID, nico_chat, youtube_player)
 
-nico_chat = NicoChat(OBS_HOST, OBS_PORT, OBS_PASSWORD)
+    # 클라이언트 실행
+    chzzk_cl.run(NID_AUT, NID_SES)
 
-
-def hash_to_color(hash_str):
-    # 해시값의 앞 6자리를 이용해 RGB 값 생성
-    hex_color = hash_str[2:8]
-    # 16진수 값을 10진수 RGB 값으로 변환
-    return int(hex_color, 16)
-
-
-@chzzk_cl.event
-async def on_chat(message: ChatMessage):
-    color = hash_to_color(message.profile.user_id_hash)
-    print(color)
-    await nico_chat.splash_chat(message.content, message.profile.nickname, color)
-    # if message.content == "!안녕":
-    #     await chzzk_cl.send_chat("%s님, 안녕하세요!" % message.profile.nickname)
-    # if message.content == "!신청곡":
-    #     await chzzk_cl.send_chat("%s님, 신청곡은 현재 받지 않고 있습니다." % message.profile.nickname)
-
-@chzzk_cl.event
-async def on_donation(message: DonationMessage):
-    await chzzk_cl.send_chat("%s님, %d원 후원 감사합니다." % (message.profile.nickname, message.extras.pay_amount))
-
-
-chzzk_cl.run(NID_AUT, NID_SES)
+if __name__ == "__main__":
+    main()
