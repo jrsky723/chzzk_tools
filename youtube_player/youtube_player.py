@@ -44,7 +44,7 @@ class YoutubePlayer:
         }
         
         output = template.render(data)
-        output_file = os.path.join(current_dir, 'youtube.html')
+        output_file = os.path.join(current_dir, 'output.html')
 
         with open(output_file, 'w', encoding='utf-8') as file:
             file.write(output)

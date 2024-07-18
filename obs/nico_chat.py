@@ -17,13 +17,28 @@ class NicoChat:
         self.remove_existing_mytext_sources()
 
     def remove_existing_mytext_sources(self) -> None:
-        return
-        scene_name = self.current_scene_name
-        sources = self.client.get_scene_item_list(scene_name)
-        for source in sources:
-            if source['name'].startswith('MyTextSource'):
-                self.client.remove_input(source['name'])
-                print(f"Removed existing source: {source['name']}")
+        try:
+            scene_name = self.current_scene_name
+            sources = self.client.get_scene_item_list(scene_name)
+            scene_items = getattr(sources, "scene_items")
+            if not isinstance(scene_items, list):
+                raise ValueError("Invalid response from get_scene_item_list")
+            for source in scene_items:
+                if source['sourceName'].startswith('MyTextSource'):
+                    self.client.remove_scene_item(scene_name, source['sceneItemId'])
+        except Exception as e:
+            print(f"Error in remove_existing_mytext_sources: {e}")
+            print(traceback.format_exc())
+            return
+        
+       
+        # return
+        # scene_name = self.current_scene_name
+        # sources = self.client.get_scene_item_list(scene_name)
+        # for source in sources:
+        #     if source['name'].startswith('MyTextSource'):
+        #         self.client.remove_input(source['name'])
+        #         print(f"Removed existing source: {source['name']}")
 
     async def splash_chat(self, message: str, user_name: str, color: int) -> None:
         try:
