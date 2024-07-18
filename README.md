@@ -4,7 +4,8 @@ python version: 3.10.7
 ## 가상환경 설치
 
 ```sh
-python -m venv venv
+python -m venv .venv
+.venv\Scripts\activate
 ```
 
 ## Dependencies 설치
@@ -29,4 +30,5 @@ NID_SES="your_nid_ses_here"
 OBS_HOST="localhost"
 OBS_PORT="4455"
 OBS_PASSWORD="your_obs_password_here"
+YOUTUBE_DATA_API_KEY="your_youtube_data_api_key"
 ```
