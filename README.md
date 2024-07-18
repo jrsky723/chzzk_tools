@@ -29,4 +29,5 @@ NID_SES="your_nid_ses_here"
 OBS_HOST="localhost"
 OBS_PORT="4455"
 OBS_PASSWORD="your_obs_password_here"
+YOUTUBE_DATA_API_KEY="your_youtube_data_api_key"
 ```
