@@ -31,14 +31,6 @@ class NicoChat:
             print(traceback.format_exc())
             return
         
-       
-        # return
-        # scene_name = self.current_scene_name
-        # sources = self.client.get_scene_item_list(scene_name)
-        # for source in sources:
-        #     if source['name'].startswith('MyTextSource'):
-        #         self.client.remove_input(source['name'])
-        #         print(f"Removed existing source: {source['name']}")
 
     async def splash_chat(self, message: str, user_name: str, color: int) -> None:
         try:
