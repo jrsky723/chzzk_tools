@@ -4,7 +4,8 @@ python version: 3.10.7
 ## 가상환경 설치
 
 ```sh
-python -m venv venv
+python -m venv .venv
+.venv\Scripts\activate
 ```
 
 ## Dependencies 설치
