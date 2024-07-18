@@ -2,6 +2,7 @@ import os
 import requests
 import obsws_python as obs
 from jinja2 import Environment, FileSystemLoader
+from constants.youtube_player import BANNED_CHANNEL_TITLE, BANNED_KEYWORDS, Status
 
 class YoutubePlayer:
     def __init__(self, obs_client: obs.ReqClient, api_key: str):
@@ -17,11 +18,18 @@ class YoutubePlayer:
             if 'items' in data and len(data['items']) > 0:
                 video_id = data['items'][0]['id']['videoId']
                 video_title = data['items'][0]['snippet']['title']
-                return video_id, video_title
+                channelTitle = data['items'][0]['snippet']['channelTitle']
+                if channelTitle in BANNED_CHANNEL_TITLE:
+                    return Status.BANNED_CHANNEL, "", "Banned channel"
+                if any(keyword in video_title for keyword in BANNED_KEYWORDS):
+                    return Status.BANNED_KEYWORD, "", "Banned keyword"
+
+                print(f"Found video: {video_id} - {video_title} - {channelTitle}")
+                return Status.SUCCESS, video_id, video_title
             else:
-                return None, "No results found"
+                return Status.NOT_FOUND, "", "No results found"
         else:
-            return None, "Error fetching search results"
+            return Status.ERROR, "", "Error fetching search results"
 
     def update_html(self, video_id: str, title: str):
         current_dir = os.path.dirname(os.path.abspath(__file__))

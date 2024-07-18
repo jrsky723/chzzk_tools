@@ -1,6 +1,7 @@
 import obsws_python as obs
 from copy import deepcopy
-import constants as const
+import constants.common as const
+import constants.nico_chat as NicoConst
 import random
 import asyncio
 import traceback
@@ -13,10 +14,21 @@ class NicoChat:
         self.chatCount: int = 0
         self.maxCount: int = 10
 
+        self.remove_existing_mytext_sources()
+
+    def remove_existing_mytext_sources(self) -> None:
+        return
+        scene_name = self.current_scene_name
+        sources = self.client.get_scene_item_list(scene_name)
+        for source in sources:
+            if source['name'].startswith('MyTextSource'):
+                self.client.remove_input(source['name'])
+                print(f"Removed existing source: {source['name']}")
+
     async def splash_chat(self, message: str, user_name: str, color: int) -> None:
         try:
             # deepcopy
-            input_settings: Dict[str, Any] = deepcopy(const.NicoChat.TEXT_SETTINGS)
+            input_settings: Dict[str, Any] = deepcopy(NicoConst.TEXT_SETTINGS)
             input_settings["text"] = message
             input_settings["color"] = color
             input_kind: str = "text_gdiplus_v2"
