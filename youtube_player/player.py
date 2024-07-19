@@ -20,9 +20,12 @@ class YoutubePlayer:
         self.is_running = True
         self.playback_thread = None
         self.is_browser_source_created = False
+        self.refresh_ui_callback = None
         self.clear_html()
         self.setup_browser_source()
-        
+    
+    def set_refresh_ui_callback(self, callback):
+        self.refresh_ui_callback = callback
 
     def execute_video_request(self, video_url: str) -> str:
         video_id = self.extract_video_id(video_url)
@@ -44,14 +47,14 @@ class YoutubePlayer:
         duration = self.parse_duration(duration_str)
 
         self.add_video_to_list(video_id, video_title, channel_title, duration)
-     
+      
         return Message.REQUEST_SUCCESS.format(
             f"{video_title} - {channel_title} ({duration})"
         )
 
     def extract_video_id(self, url: str) -> str | None:
         parsed_url = urlparse(url)
-        if parsed_url.hostname in ['www.youtube.com', 'youtube.com']:
+        if parsed_url.hostname in ['www.youtube.com', 'youtube.com', 'm.youtube.com']:
             if parsed_url.path == '/watch':
                 return parse_qs(parsed_url.query).get('v', [None])[0]
             if parsed_url.path.startswith('/embed/'):
@@ -98,7 +101,9 @@ class YoutubePlayer:
             "duration": duration,
         })
         if self.current_video_index == -1:
-            self.play_video(0)
+            self.play_video(len(self.video_list) - 1)
+        if self.refresh_ui_callback:
+            self.refresh_ui_callback()
 
     def play_video(self, index: int):
         if 0 <= index < len(self.video_list):
@@ -140,6 +145,8 @@ class YoutubePlayer:
                         self.play_video(self.current_video_index)
                     else:
                         self.play_video(-1)
+                    if self.refresh_ui_callback:
+                        self.refresh_ui_callback()
                     break
             threading.Event().wait(1)
         
@@ -178,6 +185,7 @@ class YoutubePlayer:
             file.write("")
 
     def setup_browser_source(self):
+        self.is_browser_source_created = scene_item_exists(self.obs_client, get_current_scene_name(self.obs_client), Source.NAME)
         self.create_browser_source()
         self.refresh_browser_source()
 

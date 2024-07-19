@@ -5,7 +5,7 @@ from chzzk.chat_client import ChatClient
 from obs.nico_chat import NicoChat
 from youtube_player.player import YoutubePlayer
 from constants.common import Path as CommonPath, CommandName
-from tk_gui.app import run_app
+from tk_gui.app import App
 import tkinter as tk
 import threading
 
@@ -34,7 +34,6 @@ def init_clients(variables):
 
 def main():
     root = tk.Tk()
-
     # GUI 변수 초기화
     variables = {
         'nico_chat_var': tk.BooleanVar(value=True),
@@ -43,9 +42,13 @@ def main():
             CommandName.HELLO: tk.BooleanVar(value=True)
         }
     }
-
     nico_chat, youtube_player, chzzk_cl = init_clients(variables)
-    run_app(root, nico_chat, youtube_player, chzzk_cl, variables)
+
+    app = App(root, nico_chat, youtube_player, chzzk_cl, variables)
+
+    youtube_player.set_refresh_ui_callback(app.update_video_list)
+
+    root.mainloop()
 
 if __name__ == "__main__":
     main()

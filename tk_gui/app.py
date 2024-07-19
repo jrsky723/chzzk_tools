@@ -10,7 +10,6 @@ class App:
         self.root = root
         self.root.title("OBS and YouTube Control")
         self.root.geometry("600x500") 
-
         self.nico_chat: NicoChat = nico_chat
         self.youtube_player: YoutubePlayer = youtube_player
         self.chzzk_cl: BaseChatClient = chzzk_cl
@@ -170,7 +169,3 @@ class App:
     def on_closing(self):
         self.youtube_player.stop()
         self.root.destroy()
-
-def run_app(root: tk.Tk, nico_chat: NicoChat, youtube_player: YoutubePlayer, chzzk_cl: BaseChatClient, variables: dict):
-    app = App(root, nico_chat, youtube_player, chzzk_cl, variables)
-    root.mainloop()

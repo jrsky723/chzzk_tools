@@ -27,9 +27,7 @@ class Status:
 
 # 밴하는 채널 리스트를 추가
 BANNED_CHANNEL_TITLE = {
-        "얀모",
-        "뮤직모",
-        "겜모",
+
 }
 
 
