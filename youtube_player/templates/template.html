@@ -60,21 +60,12 @@
           },
           events: {
             onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
           },
         });
       }
       function onPlayerReady(event) {
         event.target.setVolume(8);
-      }
-
-      function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING) {
-          console.log("Video is playing");
-        }
-        if (event.data == YT.PlayerState.PAUSED) {
-          console.log("Video is paused");
-        }
+        event.tartget.playVideo();
       }
     </script>
   </head>
