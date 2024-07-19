@@ -40,7 +40,7 @@ class App:
             cb.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
             row += 1
 
-        self.create_button = tk.Button(self.root, text=gui_const.GuiCommand.CREATE_BROWSER, command=self.youtube_player.create_browser_source)
+        self.create_button = tk.Button(self.root, text=gui_const.GuiCommand.CREATE_BROWSER, command=self.create_browser_source)
         self.create_button.grid(row=row, column=0, padx=10, pady=10, sticky="ew")
 
         # OBS 브라우저 소스 새로고침 버튼
@@ -117,6 +117,12 @@ class App:
             self.youtube_player.delete_browser_source()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to delete browser source: {e}")
+
+    def create_browser_source(self):
+        try:
+            self.youtube_player.create_browser_source()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to create browser source: {e}")
 
     def update_remaining_time(self):
         remaining_time = self.youtube_player.get_remaining_time()

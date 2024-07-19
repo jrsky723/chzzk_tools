@@ -19,8 +19,10 @@ class YoutubePlayer:
         self.current_video_duration = None
         self.is_running = True
         self.playback_thread = None
+        self.is_browser_source_created = False
         self.clear_html()
         self.setup_browser_source()
+        
 
     def execute_video_request(self, video_url: str) -> str:
         video_id = self.extract_video_id(video_url)
@@ -176,12 +178,12 @@ class YoutubePlayer:
             file.write("")
 
     def setup_browser_source(self):
-        scene_name = get_current_scene_name(self.obs_client)
-        if not scene_item_exists(self.obs_client, scene_name, Source.NAME):
-            self.create_browser_source()
+        self.create_browser_source()
         self.refresh_browser_source()
 
     def create_browser_source(self):
+        if self.is_browser_source_created:
+            return
         current_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(current_dir, Source.OUTPUT)
         try:
@@ -197,24 +199,32 @@ class YoutubePlayer:
                 },
                 sceneItemEnabled=True,
             )
+            self.is_browser_source_created = True
         except Exception as e:
             raise e
 
     def refresh_browser_source(self):
+        if not self.is_browser_source_created:
+            return
         try:
             self.obs_client.press_input_properties_button(Source.NAME, "refreshnocache")
         except Exception as e:
             raise e
 
     def delete_browser_source(self):
+        if not self.is_browser_source_created:
+            return
         try:
             self.obs_client.remove_input(Source.NAME)
+            self.is_browser_source_created = False
         except Exception as e:
             raise e
         
     def stop(self):
         self.is_running = False
         self.clear_html()
-        self.delete_browser_source()
+        scene_name = get_current_scene_name(self.obs_client)
+        if scene_item_exists(self.obs_client, scene_name, Source.NAME):
+            self.delete_browser_source()
         if self.playback_thread:
             self.playback_thread.join()
