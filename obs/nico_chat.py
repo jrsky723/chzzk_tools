@@ -7,6 +7,7 @@ import asyncio
 import traceback
 from typing import Any, Dict
 from obs.dataclass import SceneItemTransform   
+import obs.obs_utils as utils
 
 class NicoChat:
     def __init__(self, client: obs.ReqClient):  
@@ -18,7 +19,7 @@ class NicoChat:
 
     def remove_existing_mytext_sources(self) -> None:
         try:
-            scene_name = self.current_scene_name
+            scene_name = utils.get_current_scene_name(self.client)
             sources = self.client.get_scene_item_list(scene_name)
             scene_items = getattr(sources, "scene_items")
             if not isinstance(scene_items, list):
@@ -41,7 +42,7 @@ class NicoChat:
             input_kind: str = "text_gdiplus_v2"
             input_name: str = f'MyTextSource_{user_name} {self.chatCount}'
             self.chatCount += 1
-            scene_name: str = self.current_scene_name
+            scene_name: str = utils.get_current_scene_name(self.client)
 
             if self.chatCount > self.maxCount:
                 self.chatCount -= 1
@@ -59,17 +60,17 @@ class NicoChat:
                 "positionY": initial_y,
             })
 
-            transform = self.get_transform(scene_name, item_id)
+            transform = utils.get_transform(self.client, scene_name, item_id)
 
             item_width: int = 0
 
             while transform.positionX + item_width > 0:
-                transform = self.get_transform(scene_name, item_id)
+                transform = utils.get_transform(self.client, scene_name, item_id)
                 if item_width == 0:
                     item_width = transform.sourceWidth
                 await self.move_text_left(scene_name, item_id, transform, message)
 
-                transform = self.get_transform(scene_name, item_id)
+                transform = utils.get_transform(self.client, scene_name, item_id)
 
             self.client.remove_input(input_name)
             self.chatCount -= 1
@@ -92,17 +93,17 @@ class NicoChat:
 
         await asyncio.sleep(delay)
 
-    @property
-    def current_scene_name(self) -> str:
-        response = self.client.get_scene_list()
-        if hasattr(response, "current_program_scene_name"):
-            return getattr(response, "current_program_scene_name")
-        else:
-            raise ValueError("Invalid response from get_scene_list")
+    # @property
+    # def current_scene_name(self) -> str:
+    #     response = self.client.get_scene_list()
+    #     if hasattr(response, "current_program_scene_name"):
+    #         return getattr(response, "current_program_scene_name")
+    #     else:
+    #         raise ValueError("Invalid response from get_scene_list")
 
-    def get_transform(self, scene_name: str, item_id: int) -> SceneItemTransform:
-        response = self.client.get_scene_item_transform(scene_name=scene_name, item_id=item_id)
-        if hasattr(response, "scene_item_transform"):
-            return SceneItemTransform.from_response(response)
-        else:
-            raise ValueError("Invalid response from get_scene_item_transform")
+    # def get_transform(self, scene_name: str, item_id: int) -> SceneItemTransform:
+    #     response = self.client.get_scene_item_transform(scene_name=scene_name, item_id=item_id)
+    #     if hasattr(response, "scene_item_transform"):
+    #         return SceneItemTransform.from_response(response)
+    #     else:
+    #         raise ValueError("Invalid response from get_scene_item_transform")
