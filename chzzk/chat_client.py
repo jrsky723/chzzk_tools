@@ -29,7 +29,7 @@ class ChatClient(BaseChatClient):
                 return
             else:
                 if self.tk_vars['nico_chat_var'].get():
-                    await self.nico_chat.splash_chat(message.content, nickname, color)
+                    await self.nico_chat.splash_chat(message.content, color)
 
         @self.event
         async def on_donation(message: DonationMessage):

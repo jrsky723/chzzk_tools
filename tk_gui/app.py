@@ -168,4 +168,5 @@ class App:
 
     def on_closing(self):
         self.youtube_player.stop()
+        self.nico_chat.remove_existing_mytext_sources()
         self.root.destroy()
