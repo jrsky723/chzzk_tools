@@ -40,7 +40,7 @@ class NicoChat:
             input_settings: Dict[str, Any] = deepcopy(NicoConst.TEXT_SETTINGS)
             input_settings["text"] = message
             input_settings["color"] = color
-            input_kind: str = "text_gdiplus_v2"
+            input_kind: str = "text_gdiplus_v3"
             input_name: str = f'MyTextSource_{self.chat_idx}'
             
             scene_name: str = utils.get_current_scene_name(self.client)
