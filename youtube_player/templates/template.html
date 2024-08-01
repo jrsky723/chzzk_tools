@@ -49,6 +49,7 @@
     <script>
       var player;
       var videoId = "{{ video_id }}";
+      var start_time = parseFloat("{{ start_time }}");
       function onYouTubeIframeAPIReady() {
         player = new YT.Player("player", {
           width: "1280",
@@ -57,6 +58,7 @@
           playerVars: {
             autoplay: 1,
             controls: 1,
+            start: start_time,
           },
           events: {
             onReady: onPlayerReady,
@@ -64,7 +66,7 @@
         });
       }
       function onPlayerReady(event) {
-        event.target.setVolume(8);
+        event.target.setVolume(10);
         event.tartget.playVideo();
       }
     </script>

@@ -22,9 +22,8 @@ class CommandName:
     LIST = "명령어"
 
 class CommandFormat:
-    YOUTUBE = f"{CommandPrefix.YOUTUBE} <동영상 링크>"
+    YOUTUBE = f"{CommandPrefix.YOUTUBE} <동영상 링크> (시작시간) (종료시간)"
     
-
 class Message:
         HELLO = f"{Prefix.RESPONSE_PREFIX} 안녕하세요! {{}}님, 반가워요!"
         RESPONSE = f"{Prefix.RESPONSE_PREFIX} {{}}"

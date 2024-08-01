@@ -3,6 +3,8 @@ from obs.nico_chat import NicoChat
 from youtube_player.player import YoutubePlayer
 import constants.common as const
 import constants.youtube_player as youtubeConst
+from utils import parse_time, is_valid_url
+
 
 class ChatClient(BaseChatClient):
     def __init__(self, channel_id, nico_chat: NicoChat, youtube_player: YoutubePlayer, tk_vars):
@@ -41,18 +43,35 @@ class ChatClient(BaseChatClient):
             # todo: donation alert
 
     async def handle_video_request(self, message: ChatMessage):
-        try:
-            parts = message.content.split(" ", 1)
+        try:    #!유튜브 <동영상 링크> (시작시간) (종료시간)
+            parts = message.content.split(" ", 2)
             if len(parts) < 2:
                 await self.send_chat(const.Message.INVALID_COMMAND.format(const.CommandFormat.YOUTUBE))
                 return
             
             video_url = parts[1].strip()
-            
-            result:str = self.youtube_player.execute_video_request(video_url)
+
+            # 유효한 URL인지 확인
+            if not is_valid_url(video_url):
+                await self.send_chat(youtubeConst.Message.INVALID_URL.format(video_url))
+                return
+
+            start_time = None
+            end_time = None
+
+            # 시작 시간과 종료 시간이 주어졌는지 확인
+            if len(parts) > 2:
+                times = parts[2].split(" ")
+                if len(times) > 0:
+                    start_time = parse_time(times[0])
+                if len(times) > 1:
+                    end_time = parse_time(times[1])
+
+            result:str = self.youtube_player.execute_video_request(video_url, start_time, end_time)
 
             await self.send_chat(result)
-
+        except ValueError as ve:
+            await self.send_chat(youtubeConst.Message.INVALID_TIME_FORMAT.format(ve))
         except Exception as e:
             await self.send_chat(youtubeConst.Message.REQUEST_ERROR)
             print(f"Error in handle_video_request: {e}")

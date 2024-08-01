@@ -27,10 +27,10 @@ class YoutubePlayer:
     def set_refresh_ui_callback(self, callback):
         self.refresh_ui_callback = callback
 
-    def execute_video_request(self, video_url: str) -> str:
+    def execute_video_request(self, video_url: str, start_time:timedelta | None, end_time:timedelta | None) -> str:
         video_id = self.extract_video_id(video_url)
         if not video_id:
-            return Message.INVALID_URL
+            return Message.INVALID_URL.format(video_url)
         
         status, video_title, channel_title, duration_str = self.get_video_info(video_id)
         if status == Status.ERROR:
@@ -43,10 +43,12 @@ class YoutubePlayer:
         
         if any(keyword in video_title for keyword in BANNED_KEYWORDS):
             return Message.REQUEST_BANNED_KEYWORD.format(video_title)
-        
-        duration = self.parse_duration(duration_str)
 
-        self.add_video_to_list(video_id, video_title, channel_title, duration)
+        s_t = start_time if start_time else timedelta(0)    
+        duration = self.parse_duration(duration_str)
+        duration = duration - s_t if end_time is None else end_time - s_t
+
+        self.add_video_to_list(video_id, video_title, channel_title, s_t, duration)
       
         return Message.REQUEST_SUCCESS.format(
             f"{video_title} - {channel_title} ({duration})"
@@ -93,11 +95,12 @@ class YoutubePlayer:
             seconds = duration_str.split('S')[0]
         return timedelta(hours=int(hours), minutes=int(minutes), seconds=int(seconds))
 
-    def add_video_to_list(self, video_id: str, title: str, channel: str, duration: timedelta):
+    def add_video_to_list(self, video_id: str, title: str, channel: str, start_time:timedelta, duration: timedelta):
         self.video_list.append({
             "video_id": video_id,
             "title": title,
             "channel": channel,
+            "start_time": start_time,
             "duration": duration,
         })
         if self.current_video_index == -1:
@@ -109,7 +112,12 @@ class YoutubePlayer:
         if 0 <= index < len(self.video_list):
             self.current_video_index = index
             video = self.video_list[self.current_video_index]
-            self.update_html(video["video_id"], video["title"], video["channel"])
+            self.update_html(
+                video["video_id"], 
+                video["title"], 
+                video["channel"], 
+                video["start_time"],
+            )
             self.refresh_browser_source()
             self.current_video_start_time = datetime.now()
             self.current_video_duration = video["duration"]
@@ -158,7 +166,7 @@ class YoutubePlayer:
                 return str(remaining_time).split('.')[0]  # Return as H:MM:SS
         return "0:00:00"
     
-    def update_html(self, video_id: str, title: str, channel: str):
+    def update_html(self, video_id: str, title: str, channel: str, start_time: timedelta):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(current_dir, 'templates')
         file_loader = FileSystemLoader(templates_dir)
@@ -170,6 +178,7 @@ class YoutubePlayer:
             'video_id': video_id,
             'title': title,
             'channel': channel,
+            'start_time': start_time.total_seconds(),
         }
         
         output = template.render(data)
