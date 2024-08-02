@@ -4,7 +4,8 @@ from urllib.parse import urlparse
 
 def parse_time(time_str):
     # HH:MM:SS 또는 MM:SS 또는 SS 형식의 문자열을 datetime.timedelta 객체로 변환
-    if re.match(r"^\d{1,2}:\d{1,2}:\d{1,2}$", time_str):
+    pattern = re.compile(r'^(\d?\d):([0-5]\d):([0-5]\d)$|^([0-5]?\d):([0-5]\d)$')
+    if pattern.match(time_str):
         parts = time_str.split(":")
         if len(parts) == 3:
             return datetime.timedelta(hours=int(parts[0]), minutes=int(parts[1]), seconds=int(parts[2]))

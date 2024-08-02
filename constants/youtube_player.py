@@ -16,7 +16,8 @@ class Message:
         REQUEST_BANNED_CHANNEL = f"{Prefix.RESPONSE_PREFIX} 유튜브 채널명이 금지되어 있습니다: {{}}"
         REQUEST_ERROR = f"{Prefix.RESPONSE_PREFIX} 요청 중 오류가 발생했습니다"
         INVALID_URL = f"{Prefix.RESPONSE_PREFIX} 유효하지 않은 URL입니다: {{}}"
-        INVALID_TIME_FORMAT = f"{Prefix.RESPONSE_PREFIX} 잘못된 시간 형식입니다: {{}} (Ex: 3:40)"
+        INVALID_TIME_FORMAT = f"{Prefix.RESPONSE_PREFIX} 잘못된 시간 형식입니다: {{}} (Ex: 3:40, 10:30, 1:30:00)"
+        INVALID_TIME = f"{Prefix.RESPONSE_PREFIX} 잘못된 시간입니다: {{}}"
         
 
 class Status:

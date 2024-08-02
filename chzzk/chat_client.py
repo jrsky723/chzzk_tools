@@ -50,7 +50,6 @@ class ChatClient(BaseChatClient):
                 return
             
             video_url = parts[1].strip()
-
             # 유효한 URL인지 확인
             if not is_valid_url(video_url):
                 await self.send_chat(youtubeConst.Message.INVALID_URL.format(video_url))
@@ -58,7 +57,6 @@ class ChatClient(BaseChatClient):
 
             start_time = None
             end_time = None
-
             # 시작 시간과 종료 시간이 주어졌는지 확인
             if len(parts) > 2:
                 times = parts[2].split(" ")
@@ -66,9 +64,9 @@ class ChatClient(BaseChatClient):
                     start_time = parse_time(times[0])
                 if len(times) > 1:
                     end_time = parse_time(times[1])
+                    
 
             result:str = self.youtube_player.execute_video_request(video_url, start_time, end_time)
-
             await self.send_chat(result)
         except ValueError as ve:
             await self.send_chat(youtubeConst.Message.INVALID_TIME_FORMAT.format(ve))

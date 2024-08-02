@@ -43,10 +43,24 @@ class YoutubePlayer:
         
         if any(keyword in video_title for keyword in BANNED_KEYWORDS):
             return Message.REQUEST_BANNED_KEYWORD.format(video_title)
-
-        s_t = start_time if start_time else timedelta(0)    
+        
+        s_t = timedelta(0)
         duration = self.parse_duration(duration_str)
-        duration = duration - s_t if end_time is None else end_time - s_t
+        min_time = timedelta(seconds=10)
+        if start_time is not None:
+            s_t = start_time
+            if end_time is not None:
+                e_t = end_time
+                d_t = e_t - s_t
+                if d_t.total_seconds() < min_time.total_seconds():
+                    return Message.INVALID_TIME.format("영상 길이가 너무 짧습니다. (최소 10초)")
+                if d_t.total_seconds() > duration.total_seconds():
+                    return Message.INVALID_TIME.format("종료시간이 영상 길이보다 큽니다")
+                duration = d_t
+            else:
+                if s_t.total_seconds() >= duration.total_seconds():
+                    return Message.INVALID_TIME.format("시작시간이 영상 길이보다 큽니다.")
+                duration = duration - s_t
 
         self.add_video_to_list(video_id, video_title, channel_title, s_t, duration)
       
