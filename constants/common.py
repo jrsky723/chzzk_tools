@@ -9,7 +9,7 @@ UNDEFINED = "UNDEFINED"
 
 class Prefix:
     COMMAND_PREFIX = "!"
-    RESPONSE_PREFIX = "응답:"
+    RESPONSE_PREFIX = "얀모봇:"
 
 class CommandPrefix:
     HELLO = f"{Prefix.COMMAND_PREFIX}안녕"
