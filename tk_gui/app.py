@@ -10,7 +10,7 @@ class App:
     def __init__(self, root: tk.Tk, nico_chat: NicoChat, youtube_player: YoutubePlayer, chzzk_cl: BaseChatClient, variables: dict):
         self.root = root
         self.root.title("OBS and YouTube Control")
-        self.root.geometry("600x500") 
+        self.root.geometry("600x550") 
         self.nico_chat: NicoChat = nico_chat
         self.youtube_player: YoutubePlayer = youtube_player
         self.chzzk_cl: BaseChatClient = chzzk_cl

@@ -38,8 +38,9 @@ def main():
     variables = {
         'nico_chat_var': tk.BooleanVar(value=True),
         'command_vars': {
-             CommandName.YOUTUBE: tk.BooleanVar(value=True),
-            CommandName.HELLO: tk.BooleanVar(value=True)
+            CommandName.YOUTUBE: tk.BooleanVar(value=True),
+            CommandName.HELLO: tk.BooleanVar(value=True),
+            CommandName.SKIP: tk.BooleanVar(value=True),
         }
     }
     nico_chat, youtube_player, chzzk_cl = init_clients(variables)

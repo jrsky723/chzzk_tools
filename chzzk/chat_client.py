@@ -22,15 +22,25 @@ class ChatClient(BaseChatClient):
             profile = message.profile
             nickname = profile.nickname if profile is not None else const.UNDEFINED
             if content.startswith(const.Prefix.COMMAND_PREFIX):
-                if content.startswith(const.CommandPrefix.YOUTUBE) and self.tk_vars['command_vars'][const.CommandName.YOUTUBE].get():
+
+                # 신청곡 기능
+                if content.startswith(const.CommandPrefix.YOUTUBE) and self.tk_vars['command_vars'][const.CommandName.YOUTUBE]:
                     await self.handle_video_request(message)
-                elif content.startswith(const.CommandPrefix.HELLO) and self.tk_vars['command_vars'][const.CommandName.HELLO].get():
-                    await self.send_chat(const.Message.HELLO.format(nickname))
+                
+                # 현재 곡 스킵, 유지 (투표) 기능
+                if self.tk_vars['command_vars'][const.CommandName.SKIP]:
+                    if content.startswith(const.CommandPrefix.SKIP):
+                       await self.handle_skip_vote(nickname, is_skip=True)
+                    elif content.startswith(const.CommandPrefix.KEEP):
+                       await self.handle_skip_vote(nickname, is_skip=False)
+
+                elif content.startswith(const.CommandPrefix.HELLO) and self.tk_vars['command_vars'][const.CommandName.HELLO]:
+                    await self.handle_hello(message, nickname)
                 
             elif content.startswith(const.Prefix.RESPONSE_PREFIX):
                 return
             else:
-                if self.tk_vars['nico_chat_var'].get():
+                if self.tk_vars['nico_chat_var']:
                     await self.nico_chat.splash_chat(message.content, color)
 
         @self.event
@@ -42,6 +52,11 @@ class ChatClient(BaseChatClient):
             await self.send_chat(const.Message.DONATION_THANKS.format(nickname, pay_amount))
             # todo: donation alert
 
+
+    async def handle_hello(self, message: ChatMessage, nickname: str):
+        await self.send_chat(const.Message.HELLO.format(nickname))
+
+    
     async def handle_video_request(self, message: ChatMessage):
         try:
             # 신청곡 제한을 위한 닉네임 확인
@@ -77,7 +92,6 @@ class ChatClient(BaseChatClient):
             await self.send_chat(youtubeConst.Message.REQUEST_ERROR)
             print(f"Error in handle_video_request: {e}")
 
-    @staticmethod
-    def hash_to_color(hash_str):
-        hex_color = hash_str[2:8]
-        return int(hex_color, 16)
+    async def handle_skip_vote(self, nickname: str, is_skip: bool):
+        result = self.youtube_player.handle_skip_vote(nickname, is_skip)
+        await self.send_chat(result)

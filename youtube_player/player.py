@@ -7,6 +7,7 @@ from obs.obs_utils import get_current_scene_name, scene_item_exists
 import threading
 from datetime import timedelta, datetime
 from urllib.parse import urlparse, parse_qs
+from youtube_player.voting_manager import VotingManager
 
 class YoutubePlayer:
     def __init__(self, obs_client: obs.ReqClient, api_key: str):
@@ -21,6 +22,7 @@ class YoutubePlayer:
         self.is_browser_source_created = False
         self.refresh_ui_callback = None
         self.user_request_cnt = {} # 유저별 신청곡 제한을 위한 딕셔너리
+        self.voting_manager = VotingManager(self) # 스킵, 유지 투표 관리자
         self.clear_html()
         self.setup_browser_source()
     
@@ -83,7 +85,9 @@ class YoutubePlayer:
             video_title = video_title[:MAX_TITLE_LENGTH] + "..."
 
         return Message.REQUEST_SUCCESS.format(
-            f"{video_title} | {channel_title} ({duration})", self.user_request_cnt[nickname]
+            f"{video_title} | {channel_title} ({duration})", 
+            self.user_request_cnt[nickname], 
+            MAX_REQUESTS
         )
 
     def extract_video_id(self, url: str) -> str | None:
@@ -155,6 +159,7 @@ class YoutubePlayer:
 
     def play_video(self, index: int):
         if 0 <= index < len(self.video_list):
+            self.voting_manager.reset_votes()
             self.current_video_index = index
             video = self.video_list[self.current_video_index]
             self.update_html(
@@ -305,3 +310,18 @@ class YoutubePlayer:
             self.delete_browser_source()
         if self.playback_thread:
             self.playback_thread.join()
+
+    def handle_skip_vote(self, nickname: str, is_skip: bool) -> str:
+        if self.current_video_index == -1:
+            return Message.NO_VIDEO_PLAYING
+        self.voting_manager.handle_vote(nickname, "skip" if is_skip else "keep")
+        current_skip = self.voting_manager.votes_skip
+        current_keep = self.voting_manager.votes_keep
+        if is_skip:
+            if current_skip == current_keep + 1:
+                return Message.SKIP_COUNT_START.format(nickname, current_skip, current_keep)
+        else:
+            if current_keep == current_skip:
+                return Message.KEEP_VIDEO.format(nickname, current_skip, current_keep)
+        return Message.VOTE_SUCCESS.format(nickname, current_skip, current_keep)
+            

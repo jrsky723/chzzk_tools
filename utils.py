@@ -24,3 +24,8 @@ def is_valid_url(url):
     except Exception as e:
         print(f"Error in is_valid_url  {e}")
         return False
+    
+
+def hash_to_color(hash_str):
+        hex_color = hash_str[2:8]
+        return int(hex_color, 16)

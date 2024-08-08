@@ -11,15 +11,18 @@ class Prefix:
     COMMAND_PREFIX = "!"
     RESPONSE_PREFIX = "얀모봇:"
 
-class CommandPrefix:
-    HELLO = f"{Prefix.COMMAND_PREFIX}안녕"
-    LIST = f"{Prefix.COMMAND_PREFIX}명령어"
-    YOUTUBE = f"{Prefix.COMMAND_PREFIX}유튜브"
-
 class CommandName:
     YOUTUBE = "유튜브"
     HELLO = "안녕"
-    LIST = "명령어"
+    SKIP = "스킵"
+    KEEP = "유지"
+
+
+class CommandPrefix:
+    HELLO = f"{Prefix.COMMAND_PREFIX}{CommandName.HELLO}"
+    YOUTUBE = f"{Prefix.COMMAND_PREFIX}{CommandName.YOUTUBE}"
+    SKIP = f"{Prefix.COMMAND_PREFIX}{CommandName.SKIP}"
+    KEEP = f"{Prefix.COMMAND_PREFIX}{CommandName.KEEP}"
 
 class CommandFormat:
     YOUTUBE = f"{CommandPrefix.YOUTUBE} <동영상 링크> (시작시간) (종료시간)"
