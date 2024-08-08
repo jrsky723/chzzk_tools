@@ -4,6 +4,7 @@ import constants.tk_gui as gui_const
 from obs.nico_chat import NicoChat
 from youtube_player.player import YoutubePlayer
 from chzzkpy.chat import ChatClient as BaseChatClient
+import webbrowser
 
 class App:
     def __init__(self, root: tk.Tk, nico_chat: NicoChat, youtube_player: YoutubePlayer, chzzk_cl: BaseChatClient, variables: dict):
@@ -80,6 +81,9 @@ class App:
         scrollbar.pack(side="right", fill="y")
         self.video_listbox.config(yscrollcommand=scrollbar.set)
         scrollbar.config(command=self.video_listbox.yview)
+
+        # 더블클릭 이벤트 바인딩
+        self.video_listbox.bind("<Double-Button-1>", self.open_video_url)
         
         # 동영상 스킵 버튼
         row += 1
@@ -133,7 +137,7 @@ class App:
         selected_index = self.video_listbox.curselection()
         self.video_listbox.delete(0, tk.END)
         for idx, video in enumerate(self.youtube_player.video_list):
-            display_text = f"{video['channel']} - {video['title']}"
+            display_text = f"{video['title']} | {video['channel']} | {video['nickname']}"
             self.video_listbox.insert(tk.END, display_text)
             if idx == self.youtube_player.current_video_index:
                 self.video_listbox.itemconfig(idx, {'bg': 'lightblue'})
@@ -170,3 +174,10 @@ class App:
         self.youtube_player.stop()
         self.nico_chat.remove_existing_mytext_sources()
         self.root.destroy()
+
+    def open_video_url(self, event):
+        selected_index = self.video_listbox.curselection()
+        if selected_index:
+            video_url = self.youtube_player.video_list[selected_index[0]]['video_url']
+            if video_url:
+                webbrowser.open(video_url)

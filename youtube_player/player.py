@@ -2,8 +2,7 @@ import os
 import requests
 from jinja2 import Environment, FileSystemLoader
 import obsws_python as obs
-from constants.youtube_player import BANNED_CHANNEL_TITLE, BANNED_KEYWORDS
-from constants.youtube_player import Status, Source, Message
+from constants.youtube_player import *
 from obs.obs_utils import get_current_scene_name, scene_item_exists
 import threading
 from datetime import timedelta, datetime
@@ -21,13 +20,28 @@ class YoutubePlayer:
         self.playback_thread = None
         self.is_browser_source_created = False
         self.refresh_ui_callback = None
+        self.user_request_cnt = {} # 유저별 신청곡 제한을 위한 딕셔너리
         self.clear_html()
         self.setup_browser_source()
     
     def set_refresh_ui_callback(self, callback):
         self.refresh_ui_callback = callback
 
-    def execute_video_request(self, video_url: str, start_time:timedelta | None, end_time:timedelta | None) -> str:
+    def execute_video_request(
+            self,
+            video_url: str,
+            start_time:timedelta | None,
+            end_time:timedelta | None,
+            nickname: str,
+        ) -> str:
+
+        # 사용자 신청 횟수 확인
+        if nickname in self.user_request_cnt:
+            if self.user_request_cnt[nickname] >= MAX_REQUESTS:
+                return Message.REQUEST_LIMIT_REACHED.format(nickname, MAX_REQUESTS)
+        else:
+            self.user_request_cnt[nickname] = 0
+
         video_id = self.extract_video_id(video_url)
         if not video_id:
             return Message.INVALID_URL.format(video_url)
@@ -62,10 +76,14 @@ class YoutubePlayer:
                     return Message.INVALID_TIME.format("시작시간이 영상 길이보다 큽니다.")
                 duration = duration - s_t
 
-        self.add_video_to_list(video_id, video_title, channel_title, s_t, duration)
-      
+        self.add_video_to_list(video_id, video_title, channel_title, s_t, duration, nickname, video_url)
+
+        # video_title의 길이 제한
+        if len(video_title) > MAX_TITLE_LENGTH:
+            video_title = video_title[:MAX_TITLE_LENGTH] + "..."
+
         return Message.REQUEST_SUCCESS.format(
-            f"{video_title} - {channel_title} ({duration})"
+            f"{video_title} | {channel_title} ({duration})", self.user_request_cnt[nickname]
         )
 
     def extract_video_id(self, url: str) -> str | None:
@@ -109,14 +127,27 @@ class YoutubePlayer:
             seconds = duration_str.split('S')[0]
         return timedelta(hours=int(hours), minutes=int(minutes), seconds=int(seconds))
 
-    def add_video_to_list(self, video_id: str, title: str, channel: str, start_time:timedelta, duration: timedelta):
+    def add_video_to_list(
+            self, 
+            video_id: str, 
+            title: str, 
+            channel: str, 
+            start_time:timedelta, 
+            duration: timedelta, 
+            nickname: str,
+            video_url: str
+        ):
         self.video_list.append({
             "video_id": video_id,
             "title": title,
             "channel": channel,
             "start_time": start_time,
             "duration": duration,
+            "nickname": nickname,
+            "played": False, # 재생 완료 여부
+            "video_url": video_url,
         })
+        self.user_request_cnt[nickname] += 1
         if self.current_video_index == -1:
             self.play_video(len(self.video_list) - 1)
         if self.refresh_ui_callback:
@@ -131,6 +162,7 @@ class YoutubePlayer:
                 video["title"], 
                 video["channel"], 
                 video["start_time"],
+                video["nickname"],
             )
             self.refresh_browser_source()
             self.current_video_start_time = datetime.now()
@@ -146,22 +178,35 @@ class YoutubePlayer:
 
     def remove_video_from_list(self, index: int):
         if 0 <= index < len(self.video_list):
+            self.handle_fisrt_play()
             del self.video_list[index]
             if index <= self.current_video_index and self.current_video_index > 0:
                 self.current_video_index -= 1
 
     def skip_video(self):
+        self.handle_fisrt_play()
         if self.current_video_index < len(self.video_list) - 1:
             self.current_video_index += 1
             self.play_video(self.current_video_index)
         else:
            self.play_video(-1)
+    
+    def handle_fisrt_play(self):
+        # 처음 재생된 영상인지 확인
+        played = self.video_list[self.current_video_index]["played"]
+        if not played:
+            # 처음 재생된 영상일 경우, 사용자 신청 횟수 감소
+            self.video_list[self.current_video_index]["played"] = True
+            nickname = self.video_list[self.current_video_index]["nickname"]
+            self.user_request_cnt[nickname] -= 1
 
     def check_next_video(self):
         while self.is_running:
             if self.current_video_start_time and self.current_video_duration:
                 elapsed_time = datetime.now() - self.current_video_start_time
                 if elapsed_time >= self.current_video_duration:
+                    # 재생 완료 처리
+                    self.handle_fisrt_play()
                     self.current_video_index += 1
                     if self.current_video_index < len(self.video_list):
                         self.play_video(self.current_video_index)
@@ -180,7 +225,7 @@ class YoutubePlayer:
                 return str(remaining_time).split('.')[0]  # Return as H:MM:SS
         return "0:00:00"
     
-    def update_html(self, video_id: str, title: str, channel: str, start_time: timedelta):
+    def update_html(self, video_id: str, title: str, channel: str, start_time: timedelta, nickname: str):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(current_dir, 'templates')
         file_loader = FileSystemLoader(templates_dir)
@@ -193,6 +238,7 @@ class YoutubePlayer:
             'title': title,
             'channel': channel,
             'start_time': start_time.total_seconds(),
+            'nickname': nickname,
         }
         
         output = template.render(data)

@@ -43,7 +43,11 @@ class ChatClient(BaseChatClient):
             # todo: donation alert
 
     async def handle_video_request(self, message: ChatMessage):
-        try:    #!유튜브 <동영상 링크> (시작시간) (종료시간)
+        try:
+            # 신청곡 제한을 위한 닉네임 확인
+            nickname = message.profile.nickname if message.profile is not None else const.UNDEFINED 
+
+            #!유튜브 <동영상 링크> (시작시간) (종료시간)
             parts = message.content.split(" ", 2)
             if len(parts) < 2:
                 await self.send_chat(const.Message.INVALID_COMMAND.format(const.CommandFormat.YOUTUBE))
@@ -65,8 +69,7 @@ class ChatClient(BaseChatClient):
                 if len(times) > 1:
                     end_time = parse_time(times[1])
                     
-
-            result:str = self.youtube_player.execute_video_request(video_url, start_time, end_time)
+            result:str = self.youtube_player.execute_video_request(video_url, start_time, end_time, nickname)
             await self.send_chat(result)
         except ValueError as ve:
             await self.send_chat(youtubeConst.Message.INVALID_TIME_FORMAT.format(ve))
