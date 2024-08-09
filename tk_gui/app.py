@@ -99,8 +99,6 @@ class App:
         self.remove_video_button.grid(row=row, column=2, 
         padx=10, pady=10, sticky="ew")
 
-      
-
     def skip_video(self):
         try:
             self.youtube_player.skip_video()

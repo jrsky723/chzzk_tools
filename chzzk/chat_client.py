@@ -24,23 +24,23 @@ class ChatClient(BaseChatClient):
             if content.startswith(const.Prefix.COMMAND_PREFIX):
 
                 # 신청곡 기능
-                if content.startswith(const.CommandPrefix.YOUTUBE) and self.tk_vars['command_vars'][const.CommandName.YOUTUBE]:
+                if content.startswith(const.CommandPrefix.YOUTUBE) and self.tk_vars['command_vars'][const.CommandName.YOUTUBE].get():
                     await self.handle_video_request(message)
                 
                 # 현재 곡 스킵, 유지 (투표) 기능
-                if self.tk_vars['command_vars'][const.CommandName.SKIP]:
-                    if content.startswith(const.CommandPrefix.SKIP):
+                if self.tk_vars['command_vars'][const.CommandName.SKIP].get():
+                    if content == const.CommandPrefix.SKIP:
                        await self.handle_skip_vote(nickname, is_skip=True)
-                    elif content.startswith(const.CommandPrefix.KEEP):
+                    elif content == const.CommandPrefix.KEEP:
                        await self.handle_skip_vote(nickname, is_skip=False)
 
-                elif content.startswith(const.CommandPrefix.HELLO) and self.tk_vars['command_vars'][const.CommandName.HELLO]:
+                elif content.startswith(const.CommandPrefix.HELLO) and self.tk_vars['command_vars'][const.CommandName.HELLO].get():
                     await self.handle_hello(message, nickname)
                 
             elif content.startswith(const.Prefix.RESPONSE_PREFIX):
                 return
             else:
-                if self.tk_vars['nico_chat_var']:
+                if self.tk_vars['nico_chat_var'].get():
                     await self.nico_chat.splash_chat(message.content, color)
 
         @self.event
