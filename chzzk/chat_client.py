@@ -4,6 +4,7 @@ from youtube_player.player import YoutubePlayer
 import constants.common as const
 import constants.youtube_player as youtubeConst
 from utils import parse_time, is_valid_url
+import re
 
 
 class ChatClient(BaseChatClient):
@@ -17,7 +18,6 @@ class ChatClient(BaseChatClient):
     def setup_event_handlers(self):
         @self.event
         async def on_chat(message: ChatMessage):
-            color = 0xFFFFFF # white
             content = message.content
             profile = message.profile
             nickname = profile.nickname if profile is not None else const.UNDEFINED
@@ -41,7 +41,8 @@ class ChatClient(BaseChatClient):
                 return
             else:
                 if self.tk_vars['nico_chat_var'].get():
-                    await self.nico_chat.splash_chat(message.content, color)
+                    # {} 안에 있는 내용은 무시 (이모티콘)
+                    await self.handle_nico_chat(content)
 
         @self.event
         async def on_donation(message: DonationMessage):
@@ -56,6 +57,12 @@ class ChatClient(BaseChatClient):
     async def handle_hello(self, message: ChatMessage, nickname: str):
         await self.send_chat(const.Message.HELLO.format(nickname))
 
+    async def handle_nico_chat(self, content: str):
+        # {}, 와 {} 안에 있는 내용은 무시 (이모티콘)
+        cleaned_content = re.sub(r'\{.*?\}', '', content)
+        if cleaned_content == '': return
+        color = 0xFFFFFF # white
+        await self.nico_chat.splash_chat(cleaned_content, color)
     
     async def handle_video_request(self, message: ChatMessage):
         try:
@@ -63,7 +70,9 @@ class ChatClient(BaseChatClient):
             nickname = message.profile.nickname if message.profile is not None else const.UNDEFINED 
 
             #!유튜브 <동영상 링크> (시작시간) (종료시간)
-            parts = message.content.split(" ", 2)
+            # \xa0 -> 공백으로 변환 (소보로빠아앙님의 경우 공백이 이상하게 들어가는 경우가 있음)
+            parts = message.content.replace('\xa0', ' ').split(" ", 2)
+            
             if len(parts) < 2:
                 await self.send_chat(const.Message.INVALID_COMMAND.format(const.CommandFormat.YOUTUBE))
                 return

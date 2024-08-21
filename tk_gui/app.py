@@ -143,9 +143,9 @@ class App:
         if selected_index:
             self.video_listbox.selection_set(selected_index)
         
-        self.updat_current_video_index()
+        self.update_current_video_index()
     
-    def updat_current_video_index(self):
+    def update_current_video_index(self):
         self.current_video_label.config(text=f"현재 재생 중인 동영상: {self.youtube_player.current_video_index + 1}/{len(self.youtube_player.video_list)}")
 
     def update_current_video_info(self):

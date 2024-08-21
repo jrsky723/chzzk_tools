@@ -159,6 +159,7 @@ class YoutubePlayer:
 
     def play_video(self, index: int):
         if 0 <= index < len(self.video_list):
+            self.handle_fisrt_play(index)
             self.voting_manager.reset_votes()
             self.current_video_index = index
             video = self.video_list[self.current_video_index]
@@ -183,26 +184,25 @@ class YoutubePlayer:
 
     def remove_video_from_list(self, index: int):
         if 0 <= index < len(self.video_list):
-            self.handle_fisrt_play()
+            self.handle_fisrt_play(index)
             del self.video_list[index]
             if index <= self.current_video_index and self.current_video_index > 0:
                 self.current_video_index -= 1
 
     def skip_video(self):
-        self.handle_fisrt_play()
         if self.current_video_index < len(self.video_list) - 1:
             self.current_video_index += 1
             self.play_video(self.current_video_index)
         else:
            self.play_video(-1)
     
-    def handle_fisrt_play(self):
+    def handle_fisrt_play(self, index: int):
         # 처음 재생된 영상인지 확인
-        played = self.video_list[self.current_video_index]["played"]
+        played = self.video_list[index]["played"]
         if not played:
             # 처음 재생된 영상일 경우, 사용자 신청 횟수 감소
-            self.video_list[self.current_video_index]["played"] = True
-            nickname = self.video_list[self.current_video_index]["nickname"]
+            self.video_list[index]["played"] = True
+            nickname = self.video_list[index]["nickname"]
             self.user_request_cnt[nickname] -= 1
 
     def check_next_video(self):
@@ -211,7 +211,6 @@ class YoutubePlayer:
                 elapsed_time = datetime.now() - self.current_video_start_time
                 if elapsed_time >= self.current_video_duration:
                     # 재생 완료 처리
-                    self.handle_fisrt_play()
                     self.current_video_index += 1
                     if self.current_video_index < len(self.video_list):
                         self.play_video(self.current_video_index)
