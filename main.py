@@ -9,17 +9,18 @@ from tk_gui.app import App
 import tkinter as tk
 import threading
 
+
 def init_clients(tk_vars):
     load_dotenv(dotenv_path=CommonPath.DOTENV_PATH)
-    
+
     # 환경 변수 로드
     CHANNEL_ID = str(os.getenv("CHANNEL_ID"))
     NID_AUT = str(os.getenv("NID_AUT"))
     NID_SES = str(os.getenv("NID_SES"))
-    OBS_HOST = str(os.getenv('OBS_HOST'))
-    OBS_PORT = int(str(os.getenv('OBS_PORT')))
-    OBS_PASSWORD = str(os.getenv('OBS_PASSWORD'))
-    YOUTUBE_DATA_API_KEY = str(os.getenv('YOUTUBE_DATA_API_KEY'))
+    OBS_HOST = str(os.getenv("OBS_HOST"))
+    OBS_PORT = int(str(os.getenv("OBS_PORT")))
+    OBS_PASSWORD = str(os.getenv("OBS_PASSWORD"))
+    YOUTUBE_DATA_API_KEY = str(os.getenv("YOUTUBE_DATA_API_KEY"))
 
     # 클라이언트 생성
     obs_cl = obs.ReqClient(host=OBS_HOST, port=OBS_PORT, password=OBS_PASSWORD)
@@ -32,6 +33,7 @@ def init_clients(tk_vars):
 
     return nico_chat, youtube_player, chzzk_cl
 
+
 def main():
     root = tk.Tk()
     # GUI 변수 초기화
@@ -40,7 +42,7 @@ def main():
         FunctionName.YOUTUBE: tk.BooleanVar(value=True),
         FunctionName.HELLO: tk.BooleanVar(value=True),
         FunctionName.SKIP_VOTE: tk.BooleanVar(value=True),
-    }   
+    }
     nico_chat, youtube_player, chzzk_cl = init_clients(tk_vars)
 
     app = App(root, nico_chat, youtube_player, chzzk_cl, tk_vars)
@@ -48,6 +50,7 @@ def main():
     youtube_player.set_refresh_ui_callback(app.update_video_list)
 
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

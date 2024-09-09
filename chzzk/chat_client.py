@@ -8,7 +8,9 @@ import re
 
 
 class ChatClient(BaseChatClient):
-    def __init__(self, channel_id, nico_chat: NicoChat, youtube_player: YoutubePlayer, tk_vars):
+    def __init__(
+        self, channel_id, nico_chat: NicoChat, youtube_player: YoutubePlayer, tk_vars
+    ):
         super().__init__(channel_id)
         self.nico_chat = nico_chat
         self.youtube_player = youtube_player
@@ -22,13 +24,13 @@ class ChatClient(BaseChatClient):
             profile = message.profile
             nickname = profile.nickname if profile is not None else const.UNDEFINED
             if content.startswith(const.Prefix.COMMAND_PREFIX):
-                
+
                 # 유튜브 기능 on
                 if self.tk_vars[const.FunctionName.YOUTUBE].get():
                     # 유튜브 신청곡 기능
                     if content.startswith(const.CommandPrefix.YOUTUBE):
                         await self.handle_video_request(message)
-                    
+
                     # 스킵
                     if content == const.CommandPrefix.SKIP:
                         await self.handle_skip(nickname, is_skip=True)
@@ -38,9 +40,12 @@ class ChatClient(BaseChatClient):
                         await self.handle_skip(nickname, is_skip=False)
 
                 # 인사말 기능
-                elif content.startswith(const.CommandPrefix.HELLO) and self.tk_vars[const.FunctionName.HELLO].get():
+                elif (
+                    content.startswith(const.CommandPrefix.HELLO)
+                    and self.tk_vars[const.FunctionName.HELLO].get()
+                ):
                     await self.handle_hello(message, nickname)
-                
+
             elif content.startswith(const.Prefix.RESPONSE_PREFIX):
                 return
             else:
@@ -54,33 +59,41 @@ class ChatClient(BaseChatClient):
             extras = message.extras
             nickname = profile.nickname if profile is not None else const.UNDEFINED
             pay_amount = extras.pay_amount if extras is not None else 0
-            await self.send_chat(const.Message.DONATION_THANKS.format(nickname, pay_amount))
+            await self.send_chat(
+                const.Message.DONATION_THANKS.format(nickname, pay_amount)
+            )
             # todo: donation alert
-
 
     async def handle_hello(self, message: ChatMessage, nickname: str):
         await self.send_chat(const.Message.HELLO.format(nickname))
 
     async def handle_nico_chat(self, content: str):
         # {}, 와 {} 안에 있는 내용은 무시 (이모티콘)
-        cleaned_content = re.sub(r'\{.*?\}', '', content)
-        if cleaned_content == '': return
-        color = 0xFFFFFF # white
+        cleaned_content = re.sub(r"\{.*?\}", "", content)
+        if cleaned_content == "":
+            return
+        color = 0xFFFFFF  # white
         await self.nico_chat.splash_chat(cleaned_content, color)
-    
+
     async def handle_video_request(self, message: ChatMessage):
         try:
             # 신청곡 제한을 위한 닉네임 확인
-            nickname = message.profile.nickname if message.profile is not None else const.UNDEFINED 
+            nickname = (
+                message.profile.nickname
+                if message.profile is not None
+                else const.UNDEFINED
+            )
 
             #!유튜브 <동영상 링크> (시작시간) (종료시간)
             # \xa0 -> 공백으로 변환 (소보로빠아앙님의 경우 공백이 이상하게 들어가는 경우가 있음)
-            parts = message.content.replace('\xa0', ' ').split(" ", 2)
-            
+            parts = message.content.replace("\xa0", " ").split(" ", 2)
+
             if len(parts) < 2:
-                await self.send_chat(const.Message.INVALID_COMMAND.format(const.CommandFormat.YOUTUBE))
+                await self.send_chat(
+                    const.Message.INVALID_COMMAND.format(const.CommandFormat.YOUTUBE)
+                )
                 return
-            
+
             video_url = parts[1].strip()
             # 유효한 URL인지 확인
             if not is_valid_url(video_url):
@@ -96,8 +109,10 @@ class ChatClient(BaseChatClient):
                     start_time = parse_time(times[0])
                 if len(times) > 1:
                     end_time = parse_time(times[1])
-                    
-            result:str = self.youtube_player.execute_video_request(video_url, start_time, end_time, nickname)
+
+            result: str = self.youtube_player.execute_video_request(
+                video_url, start_time, end_time, nickname
+            )
             await self.send_chat(result)
         except ValueError as ve:
             await self.send_chat(youtubeConst.Message.INVALID_TIME_FORMAT.format(ve))
@@ -110,6 +125,10 @@ class ChatClient(BaseChatClient):
         if not is_skip and not self.tk_vars[const.FunctionName.SKIP_VOTE].get():
             await self.send_chat(youtubeConst.Message.SKIP_VOTE_OFF)
             return
-        
-        result = self.youtube_player.handle_skip(nickname, is_skip, is_vote = self.tk_vars[const.FunctionName.SKIP_VOTE].get(),)
+
+        result = self.youtube_player.handle_skip(
+            nickname,
+            is_skip,
+            is_vote=self.tk_vars[const.FunctionName.SKIP_VOTE].get(),
+        )
         await self.send_chat(result)

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Any
 import obsws_python as obs
 
+
 @dataclass
 class SceneItemTransform:
     sourceWidth: int
@@ -10,7 +11,7 @@ class SceneItemTransform:
     positionY: float
 
     @staticmethod
-    def from_response(response: Any) -> 'SceneItemTransform':
+    def from_response(response: Any) -> "SceneItemTransform":
         try:
             sceneItemTransform = getattr(response, "scene_item_transform")
             # sceneItemTransform is dict
@@ -18,7 +19,7 @@ class SceneItemTransform:
                 sourceWidth=sceneItemTransform.get("sourceWidth"),
                 sourceHeight=sceneItemTransform.get("sourceHeight"),
                 positionX=sceneItemTransform.get("positionX"),
-                positionY=sceneItemTransform.get("positionY")
+                positionY=sceneItemTransform.get("positionY"),
             )
         except AttributeError:
             raise ValueError("Invalid response from SceneItemTransform")

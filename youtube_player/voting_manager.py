@@ -2,6 +2,7 @@
 import threading
 import constants.youtube_player_const as YoutubeConst
 
+
 class VotingManager:
     def __init__(self, youtube_player):
         self.youtube_player = youtube_player
@@ -9,7 +10,7 @@ class VotingManager:
         self.votes_keep = 0
         self.vote_lock = threading.Lock()
         self.skip_timer = None
-        self.user_vote_cnt = {} # 유저별 투표 횟수
+        self.user_vote_cnt = {}  # 유저별 투표 횟수
 
     def handle_vote(self, nickname, vote):
         with self.vote_lock:
@@ -27,7 +28,10 @@ class VotingManager:
             self.cancel_skip_timer()
 
     def start_skip_timer(self):
-        self.skip_timer = threading.Timer(YoutubeConst.SKIP_WAIT_TIME, self.execute_skip)
+        self.skip_timer = threading.Timer(
+            YoutubeConst.SKIP_WAIT_TIME,
+            self.execute_skip,
+        )
         self.skip_timer.start()
 
     def cancel_skip_timer(self):
