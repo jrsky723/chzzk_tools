@@ -1,8 +1,8 @@
 from chzzkpy.chat import ChatClient as BaseChatClient, ChatMessage, DonationMessage
 from obs.nico_chat import NicoChat
 from youtube_player.player import YoutubePlayer
-import constants.common as const
-import constants.youtube_player as youtubeConst
+import constants.common_const as const
+import constants.youtube_player_const as youtubeConst
 from utils import parse_time, is_valid_url
 import re
 
@@ -22,25 +22,29 @@ class ChatClient(BaseChatClient):
             profile = message.profile
             nickname = profile.nickname if profile is not None else const.UNDEFINED
             if content.startswith(const.Prefix.COMMAND_PREFIX):
-
-                # 신청곡 기능
-                if content.startswith(const.CommandPrefix.YOUTUBE) and self.tk_vars['command_vars'][const.CommandName.YOUTUBE].get():
-                    await self.handle_video_request(message)
                 
-                # 현재 곡 스킵, 유지 (투표) 기능
-                if self.tk_vars['command_vars'][const.CommandName.SKIP].get():
+                # 유튜브 기능 on
+                if self.tk_vars[const.FunctionName.YOUTUBE].get():
+                    # 유튜브 신청곡 기능
+                    if content.startswith(const.CommandPrefix.YOUTUBE):
+                        await self.handle_video_request(message)
+                    
+                    # 스킵
                     if content == const.CommandPrefix.SKIP:
-                       await self.handle_skip_vote(nickname, is_skip=True)
-                    elif content == const.CommandPrefix.KEEP:
-                       await self.handle_skip_vote(nickname, is_skip=False)
+                        await self.handle_skip(nickname, is_skip=True)
 
-                elif content.startswith(const.CommandPrefix.HELLO) and self.tk_vars['command_vars'][const.CommandName.HELLO].get():
+                    # 유지
+                    if content == const.CommandPrefix.KEEP:
+                        await self.handle_skip(nickname, is_skip=False)
+
+                # 인사말 기능
+                elif content.startswith(const.CommandPrefix.HELLO) and self.tk_vars[const.FunctionName.HELLO].get():
                     await self.handle_hello(message, nickname)
                 
             elif content.startswith(const.Prefix.RESPONSE_PREFIX):
                 return
             else:
-                if self.tk_vars['nico_chat_var'].get():
+                if self.tk_vars[const.FunctionName.NICO_CHAT].get():
                     # {} 안에 있는 내용은 무시 (이모티콘)
                     await self.handle_nico_chat(content)
 
@@ -101,6 +105,11 @@ class ChatClient(BaseChatClient):
             await self.send_chat(youtubeConst.Message.REQUEST_ERROR)
             print(f"Error in handle_video_request: {e}")
 
-    async def handle_skip_vote(self, nickname: str, is_skip: bool):
-        result = self.youtube_player.handle_skip_vote(nickname, is_skip)
+    async def handle_skip(self, nickname: str, is_skip: bool):
+        # 유지(Keep) 이면서, 스킵 투표가 꺼져 있는 경우
+        if not is_skip and not self.tk_vars[const.FunctionName.SKIP_VOTE].get():
+            await self.send_chat(youtubeConst.Message.SKIP_VOTE_OFF)
+            return
+        
+        result = self.youtube_player.handle_skip(nickname, is_skip, is_vote = self.tk_vars[const.FunctionName.SKIP_VOTE].get(),)
         await self.send_chat(result)

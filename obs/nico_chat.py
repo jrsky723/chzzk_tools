@@ -1,7 +1,7 @@
 import obsws_python as obs
 from copy import deepcopy
-import constants.common as const
-import constants.nico_chat as NicoConst
+import constants.common_const as const
+import constants.nico_chat_const as NicoConst
 import random
 import asyncio
 import time

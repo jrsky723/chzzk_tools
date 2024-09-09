@@ -17,6 +17,11 @@ class CommandName:
     SKIP = "스킵"
     KEEP = "유지"
 
+class FunctionName:
+    NICO_CHAT = "니코동 채팅"
+    YOUTUBE = "유튜브 신청곡"
+    HELLO = "안녕 인사"
+    SKIP_VOTE = "스킵 투표"
 
 class CommandPrefix:
     HELLO = f"{Prefix.COMMAND_PREFIX}{CommandName.HELLO}"

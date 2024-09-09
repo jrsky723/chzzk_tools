@@ -35,6 +35,9 @@
         display: inline-block;
         padding-left: 100%;
         animation: scroll 15s linear infinite;
+        -webkit-text-stroke: 1.5px black;
+        text-shadow: 2px 2px 4px black;
+        font-weight: bold;
       }
       @keyframes scroll {
         0% {
@@ -66,7 +69,7 @@
         });
       }
       function onPlayerReady(event) {
-        event.target.setVolume(15);
+        event.target.setVolume(8);
         event.tartget.playVideo();
       }
     </script>

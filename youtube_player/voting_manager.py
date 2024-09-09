@@ -1,6 +1,6 @@
 # voting_manager.py
 import threading
-import constants.youtube_player as YoutubeConst
+import constants.youtube_player_const as YoutubeConst
 
 class VotingManager:
     def __init__(self, youtube_player):

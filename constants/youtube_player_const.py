@@ -1,7 +1,7 @@
-from constants.common import Prefix, CommandName
+from constants.common_const import Prefix, CommandName
 
 # 한번에 할 수 있는 최대 요청 횟수
-MAX_REQUESTS = 3
+MAX_REQUESTS = 1
 
 # 출력 시의 영상 제목 최대 길이
 MAX_TITLE_LENGTH = 30
@@ -33,12 +33,19 @@ class Message:
         # 신청 횟수
         REQUEST_LIMIT_REACHED = f"{Prefix.RESPONSE_PREFIX} {{}}님의 신청 횟수가 초과되었습니다 (최대 {{}}회)"
 
-        # 투표
+        # 스킵 투표
+        # SKIP VOTE
         VOTE_ERROR = f"{Prefix.RESPONSE_PREFIX} 투표 중 오류가 발생했습니다"
         VOTE_SUCCESS = f"{Prefix.RESPONSE_PREFIX} {{}} 투표 완료! (스킵:{{}} | 유지:{{}})"
         NO_VIDEO_PLAYING = f"{Prefix.RESPONSE_PREFIX} 현재 재생 중인 영상이 없습니다"
         SKIP_COUNT_START = f"{Prefix.RESPONSE_PREFIX} {{}}로 인해 {SKIP_WAIT_TIME}초 후 영상을 스킵합니다 (스킵:{{}} | 유지:{{}})"
         KEEP_VIDEO = f"{Prefix.RESPONSE_PREFIX} {{}}로 인해 영상을 유지합니다 (스킵:{{}} | 유지:{{}})"
+        
+        # SKIP OWN VIDEO
+        SKIP_OWN_VIDEO = f"{Prefix.RESPONSE_PREFIX} 스킵! {{}}님의 영상을 스킵합니다"
+        IS_NOT_OWN_VIDEO = f"{Prefix.RESPONSE_PREFIX} {{}}님만 현재 영상을 스킵할 수 있습니다"
+        SKIP_VOTE_OFF = f"{Prefix.RESPONSE_PREFIX} 스킵 투표기능이 꺼져 있습니다"
+
 
 
 class Status:

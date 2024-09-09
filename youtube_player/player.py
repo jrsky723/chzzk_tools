@@ -1,19 +1,23 @@
 import os
 import requests
-from jinja2 import Environment, FileSystemLoader
-import obsws_python as obs
-from constants.youtube_player import *
-from obs.obs_utils import get_current_scene_name, scene_item_exists
 import threading
 from datetime import timedelta, datetime
+
+import obsws_python as obs
+from jinja2 import Environment, FileSystemLoader
 from urllib.parse import urlparse, parse_qs
+
+from youtube_player.models.video import Video
 from youtube_player.voting_manager import VotingManager
+from constants.youtube_player_const import *
+from obs.obs_utils import get_current_scene_name, scene_item_exists
+
 
 class YoutubePlayer:
     def __init__(self, obs_client: obs.ReqClient, api_key: str):
         self.obs_client = obs_client
         self.api_key = api_key
-        self.video_list = []
+        self.video_list: list[Video] = []
         self.current_video_index = -1
         self.current_video_start_time = None
         self.current_video_duration = None
@@ -78,7 +82,9 @@ class YoutubePlayer:
                     return Message.INVALID_TIME.format("시작시간이 영상 길이보다 큽니다.")
                 duration = duration - s_t
 
-        self.add_video_to_list(video_id, video_title, channel_title, s_t, duration, nickname, video_url)
+
+        video = Video(video_id, video_title, channel_title, s_t, duration, nickname, video_url)
+        self.add_video_to_list(video)
 
         # video_title의 길이 제한
         if len(video_title) > MAX_TITLE_LENGTH:
@@ -132,26 +138,10 @@ class YoutubePlayer:
         return timedelta(hours=int(hours), minutes=int(minutes), seconds=int(seconds))
 
     def add_video_to_list(
-            self, 
-            video_id: str, 
-            title: str, 
-            channel: str, 
-            start_time:timedelta, 
-            duration: timedelta, 
-            nickname: str,
-            video_url: str
+            self, video: Video,
         ):
-        self.video_list.append({
-            "video_id": video_id,
-            "title": title,
-            "channel": channel,
-            "start_time": start_time,
-            "duration": duration,
-            "nickname": nickname,
-            "played": False, # 재생 완료 여부
-            "video_url": video_url,
-        })
-        self.user_request_cnt[nickname] += 1
+        self.video_list.append(video)
+        self.user_request_cnt[video.nickname] += 1
         if self.current_video_index == -1:
             self.play_video(len(self.video_list) - 1)
         if self.refresh_ui_callback:
@@ -163,16 +153,10 @@ class YoutubePlayer:
             self.voting_manager.reset_votes()
             self.current_video_index = index
             video = self.video_list[self.current_video_index]
-            self.update_html(
-                video["video_id"], 
-                video["title"], 
-                video["channel"], 
-                video["start_time"],
-                video["nickname"],
-            )
+            self.update_html(video)
             self.refresh_browser_source()
             self.current_video_start_time = datetime.now()
-            self.current_video_duration = video["duration"]
+            self.current_video_duration = video.duration
             self.playback_thread = threading.Thread(target=self.check_next_video)
             self.playback_thread.start()
         else:
@@ -198,11 +182,11 @@ class YoutubePlayer:
     
     def handle_fisrt_play(self, index: int):
         # 처음 재생된 영상인지 확인
-        played = self.video_list[index]["played"]
+        played = self.video_list[index].played
         if not played:
             # 처음 재생된 영상일 경우, 사용자 신청 횟수 감소
-            self.video_list[index]["played"] = True
-            nickname = self.video_list[index]["nickname"]
+            self.video_list[index].played = True
+            nickname = self.video_list[index].nickname
             self.user_request_cnt[nickname] -= 1
 
     def check_next_video(self):
@@ -229,7 +213,7 @@ class YoutubePlayer:
                 return str(remaining_time).split('.')[0]  # Return as H:MM:SS
         return "0:00:00"
     
-    def update_html(self, video_id: str, title: str, channel: str, start_time: timedelta, nickname: str):
+    def update_html(self, video: Video):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         templates_dir = os.path.join(current_dir, 'templates')
         file_loader = FileSystemLoader(templates_dir)
@@ -238,11 +222,11 @@ class YoutubePlayer:
         template = env.get_template(Source.TEMPLATE)
 
         data = {
-            'video_id': video_id,
-            'title': title,
-            'channel': channel,
-            'start_time': start_time.total_seconds(),
-            'nickname': nickname,
+            'video_id': video.video_id,
+            'title': video.title,
+            'channel': video.channel,
+            'start_time': video.start_time.total_seconds(),
+            'nickname': video.nickname,
         }
         
         output = template.render(data)
@@ -310,17 +294,36 @@ class YoutubePlayer:
         if self.playback_thread:
             self.playback_thread.join()
 
-    def handle_skip_vote(self, nickname: str, is_skip: bool) -> str:
+    def handle_skip(self, nickname: str, is_skip: bool, is_vote: bool) -> str:
+        # 스킵, 유지 투표 및 시청자 자기 자신의 음악 바로 스킵 처리
+
+        # 현재 재생 중인 영상이 없을 경우
         if self.current_video_index == -1:
             return Message.NO_VIDEO_PLAYING
-        self.voting_manager.handle_vote(nickname, "skip" if is_skip else "keep")
-        current_skip = self.voting_manager.votes_skip
-        current_keep = self.voting_manager.votes_keep
-        if is_skip:
-            if current_skip == current_keep + 1:
-                return Message.SKIP_COUNT_START.format(nickname, current_skip, current_keep)
-        else:
-            if current_keep == current_skip:
-                return Message.KEEP_VIDEO.format(nickname, current_skip, current_keep)
-        return Message.VOTE_SUCCESS.format(nickname, current_skip, current_keep)
+        
+        # 스킵 투표 기능이 켜져 있을 경우
+        if is_vote:
+            self.voting_manager.handle_vote(nickname, "skip" if is_skip else "keep")
+            current_skip = self.voting_manager.votes_skip
+            current_keep = self.voting_manager.votes_keep
+            if is_skip:
+                # 스킵 투표로 인해 스킵 횟수가 유지 횟수보다 1 더 클 경우
+                if current_skip == current_keep + 1:
+                    return Message.SKIP_COUNT_START.format(nickname, current_skip, current_keep)
+            else:
+                # 유지 투표로 인해 스킵 횟수와 유지 횟수가 같을 경우
+                if current_keep == current_skip:
+                    return Message.KEEP_VIDEO.format(nickname, current_skip, current_keep)
+            
+            return Message.VOTE_SUCCESS.format(nickname, current_skip, current_keep)    
+        
+        else: # 스킵 투표 기능이 아닐 경우     
+            current_video = self.video_list[self.current_video_index]
+
+             # 시청자 자신의 음악일 경우 바로 스킵
+            if current_video.nickname == nickname:
+                self.skip_video()
+                return Message.SKIP_OWN_VIDEO.format(nickname)
+            else:
+                return Message.IS_NOT_OWN_VIDEO.format(current_video.nickname)
             

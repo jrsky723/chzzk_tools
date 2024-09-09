@@ -1,20 +1,20 @@
 import tkinter as tk
 from tkinter import messagebox
-import constants.tk_gui as gui_const
+import constants.tk_gui_const as gui_const
 from obs.nico_chat import NicoChat
 from youtube_player.player import YoutubePlayer
 from chzzkpy.chat import ChatClient as BaseChatClient
 import webbrowser
 
 class App:
-    def __init__(self, root: tk.Tk, nico_chat: NicoChat, youtube_player: YoutubePlayer, chzzk_cl: BaseChatClient, variables: dict):
+    def __init__(self, root: tk.Tk, nico_chat: NicoChat, youtube_player: YoutubePlayer, chzzk_cl: BaseChatClient, tk_vars: dict):
         self.root = root
         self.root.title("OBS and YouTube Control")
         self.root.geometry("600x550") 
         self.nico_chat: NicoChat = nico_chat
         self.youtube_player: YoutubePlayer = youtube_player
         self.chzzk_cl: BaseChatClient = chzzk_cl
-        self.variables: dict = variables
+        self.tk_vars: dict = tk_vars
 
         # 윈도우 닫기 이벤트 핸들러 설정
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -28,49 +28,58 @@ class App:
         self.root.columnconfigure(0, weight=1)
         self.root.columnconfigure(1, weight=1)
         self.root.columnconfigure(2, weight=1)
-        
-        # NicoChat 기능 토글
-        self.nico_chat_checkbox = tk.Checkbutton(self.root, text=gui_const.GuiCommand.NICO_CHAT_TOGGLE, variable=self.variables['nico_chat_var'])
-        self.nico_chat_checkbox.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+
+        row = 0
 
         # 명령어 별 기능 토글
-        row = 1
-        for command, var in self.variables['command_vars'].items():
-            cb = tk.Checkbutton(self.root, text=f"{command} ON/OFF", variable=var)
-            cb.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
+        # 니코동 채팅, 유튜브, 인사말, 스킵 투표
+        for name, var in self.tk_vars.items():
+            self.create_checkbutton(row, 1, 1, f"{name} ON/OFF", var)
             row += 1
 
-        self.create_button = tk.Button(self.root, text=gui_const.GuiCommand.CREATE_BROWSER, command=self.create_browser_source)
-        self.create_button.grid(row=row, column=0, padx=10, pady=10, sticky="ew")
-
-        # OBS 브라우저 소스 새로고침 버튼
-        self.refresh_button = tk.Button(self.root, text=gui_const.GuiCommand.REFRESH_BROWSER, command=self.refresh_browser_source)
-        self.refresh_button.grid(row=row, column=1, padx=10, pady=10, sticky="ew")
-
-        # OBS 브라우저 소스 삭제 버튼
-        self.delete_browser_button = tk.Button(self.root, text=gui_const.GuiCommand.DELETE_BROWSER, command=self.delete_browser_source)
-        self.delete_browser_button.grid(row=row, column=2, padx=10, pady=10, sticky="ew")
+        # 브라우저 소스 관련 버튼들
+        self.create_action_button(row, 0, gui_const.GuiLabel.CREATE_BROWSER, self.create_browser_source)
+        self.create_action_button(row, 1, gui_const.GuiLabel.REFRESH_BROWSER, self.refresh_browser_source)
+        self.create_action_button(row, 2, gui_const.GuiLabel.DELETE_BROWSER, self.delete_browser_source)
 
         # 현재 동영상 정보와 남은 시간 표시
         row += 1
-        self.current_video_label = tk.Label(self.root, text="현재 재생 중인 동영상: 0/0")
-        self.current_video_label.grid(row=row, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
-
+        self.current_video_label = self.create_label(row, 0, 3, gui_const.GuiLabel.CURRENT_VIDEO_INFO.format(0, 0))
         row += 1
-        self.current_video_info_label = tk.Label(self.root, text="제목: 없음, 채널: 없음")
-        self.current_video_info_label.grid(row=row, column=0, columnspan=3, padx=5, pady=10, sticky="ew")
-
+        self.current_video_info_label = self.create_label(row, 0, 3, gui_const.GuiLabel.VIDEO_INFO_NONE)
         row += 1
-        self.remaining_time_label = tk.Label(self.root, text="남은 시간: 0:00:00")
-        self.remaining_time_label.grid(row=row, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+        self.remaining_time_label = self.create_label(row, 0, 3, gui_const.GuiLabel.REMAINING_TIME.format("0:00:00"))
 
         # 동영상 리스트 업데이트 버튼
         row += 1
-        self.update_video_list_button = tk.Button(self.root, text="동영상 리스트 업데이트", command=self.update_video_list)
-        self.update_video_list_button.grid(row=row, column=1, columnspan=1, padx=10, pady=10, sticky="ew")
+        self.create_action_button(row, 1, gui_const.GuiLabel.UPDATE_VIDEO_LIST, self.update_video_list)
 
         # 동영상 리스트 표시
         row += 1
+        self.create_video_listbox(row)
+
+        # 동영상 관련 버튼들
+        row += 1
+        self.create_action_button(row, 0, gui_const.GuiLabel.SKIP_VIDEO, self.skip_video)
+        self.create_action_button(row, 1, gui_const.GuiLabel.PLAY_VIDEO, self.play_selected_video)
+        self.create_action_button(row, 2, gui_const.GuiLabel.DELETE_VIDEO, self.remove_selected_video)
+
+    def create_action_button(self, row, column, text, command):
+        button = tk.Button(self.root, text=text, command=command)
+        button.grid(row=row, column=column, padx=10, pady=10, sticky="ew")
+        return button
+
+    def create_checkbutton(self, row, column, colspan, text, variable):
+        checkbutton = tk.Checkbutton(self.root, text=text, variable=variable)
+        checkbutton.grid(row=row, column=column, columnspan=colspan, padx=10, pady=10, sticky="ew")
+        return checkbutton
+
+    def create_label(self, row, column, colspan, text):
+        label = tk.Label(self.root, text=text)
+        label.grid(row=row, column=column, columnspan=colspan, padx=10, pady=5, sticky="ew")
+        return label
+
+    def create_video_listbox(self, row):
         listbox_frame = tk.Frame(self.root)
         listbox_frame.grid(row=row, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
 
@@ -84,76 +93,61 @@ class App:
 
         # 더블클릭 이벤트 바인딩
         self.video_listbox.bind("<Double-Button-1>", self.open_video_url)
-        
-        # 동영상 스킵 버튼
-        row += 1
-        self.skip_video_button = tk.Button(self.root, text="동영상 스킵", command=self.skip_video)
-        self.skip_video_button.grid(row=row, column=0, padx=10, pady=10, sticky="ew")
 
-        # 동영상 재생 버튼
-        self.play_video_button = tk.Button(self.root, text="동영상 재생", command=self.play_selected_video)
-        self.play_video_button.grid(row=row, column=1, padx=10, pady=10, sticky="ew")
-
-        # 동영상 제거 버튼
-        self.remove_video_button = tk.Button(self.root, text="동영상 제거", command=self.remove_selected_video)
-        self.remove_video_button.grid(row=row, column=2, 
-        padx=10, pady=10, sticky="ew")
-
-    def skip_video(self):
+    def handle_action(self, action, success_message, error_message):
         try:
-            self.youtube_player.skip_video()
+            action()
             self.update_current_video_info()
             self.update_video_list()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to skip the current video: {e}")
+            messagebox.showerror("Error", error_message.format(e))
+
+    def skip_video(self):
+        self.handle_action(self.youtube_player.skip_video, None, gui_const.GuiLabel.ERROR_SKIP_VIDEO)
 
     def refresh_browser_source(self):
-        try:
-            self.youtube_player.refresh_browser_source()
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to refresh browser source: {e}")
+        self.handle_action(self.youtube_player.refresh_browser_source, None, gui_const.GuiLabel.ERROR_REFRESH_BROWSER)
 
     def delete_browser_source(self):
-        try:
-            self.youtube_player.delete_browser_source()
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to delete browser source: {e}")
+        self.handle_action(self.youtube_player.delete_browser_source, None, gui_const.GuiLabel.ERROR_DELETE_BROWSER)
 
     def create_browser_source(self):
-        try:
-            self.youtube_player.create_browser_source()
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create browser source: {e}")
+        self.handle_action(self.youtube_player.create_browser_source, None, gui_const.GuiLabel.ERROR_CREATE_BROWSER)
 
     def update_remaining_time(self):
         remaining_time = self.youtube_player.get_remaining_time()
-        self.remaining_time_label.config(text=f"남은 시간: {remaining_time}")
+        self.remaining_time_label.config(text=gui_const.GuiLabel.REMAINING_TIME.format(remaining_time))
         self.root.after(1000, self.update_remaining_time)  # 1초마다 갱신
 
     def update_video_list(self):
         scroll_position = self.video_listbox.yview()
         selected_index = self.video_listbox.curselection()
+
+        # 리스트 초기화
         self.video_listbox.delete(0, tk.END)
+
+        # 리스트 업데이트 (제목 | 채널 | 신청자) 하나씩 추가
         for idx, video in enumerate(self.youtube_player.video_list):
-            display_text = f"{video['title']} | {video['channel']} | {video['nickname']}"
+            display_text = f"{video.title} | {video.channel} | {video.nickname}"
             self.video_listbox.insert(tk.END, display_text)
             if idx == self.youtube_player.current_video_index:
                 self.video_listbox.itemconfig(idx, {'bg': 'lightblue'})
+
         self.video_listbox.yview_moveto(scroll_position[0])
         if selected_index:
             self.video_listbox.selection_set(selected_index)
         
         self.update_current_video_index()
-    
+
     def update_current_video_index(self):
-        self.current_video_label.config(text=f"현재 재생 중인 동영상: {self.youtube_player.current_video_index + 1}/{len(self.youtube_player.video_list)}")
+        self.current_video_label.config(text=gui_const.GuiLabel.CURRENT_VIDEO_INFO.format(self.youtube_player.current_video_index + 1, len(self.youtube_player.video_list)))
 
     def update_current_video_info(self):
         if self.youtube_player.current_video_index != -1:
             current_video = self.youtube_player.video_list[self.youtube_player.current_video_index]
-            self.current_video_info_label.config(text=f"제목: {current_video['title']}, 채널: {current_video['channel']}")
+            self.current_video_info_label.config(text=f"제목: {current_video.title}, 채널: {current_video.channel}")
         else:
-            self.current_video_info_label.config(text="제목: 없음, 채널: 없음")
+            self.current_video_info_label.config(text=gui_const.GuiLabel.VIDEO_INFO_NONE)
 
     def remove_selected_video(self):
         selected_index = self.video_listbox.curselection()
@@ -176,6 +170,6 @@ class App:
     def open_video_url(self, event):
         selected_index = self.video_listbox.curselection()
         if selected_index:
-            video_url = self.youtube_player.video_list[selected_index[0]]['video_url']
+            video_url = self.youtube_player.video_list[selected_index[0]].video_url
             if video_url:
                 webbrowser.open(video_url)
