@@ -14,3 +14,6 @@ class GuiLabel:
     ERROR_REFRESH_BROWSER = "Failed to refresh browser source: {}"
     ERROR_DELETE_BROWSER = "Failed to delete browser source: {}"
     ERROR_CREATE_BROWSER = "Failed to create browser source: {}"
+
+    # 키워드
+    UPDATE_KEYWORD = "키워드 변경"

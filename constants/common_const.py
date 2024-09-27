@@ -27,6 +27,7 @@ class FunctionName:
     YOUTUBE = "유튜브 신청곡"
     HELLO = "안녕 인사"
     SKIP_VOTE = "스킵 투표"
+    KEYWORD = "키워드"
 
 
 class CommandPrefix:

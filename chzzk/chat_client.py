@@ -95,6 +95,7 @@ class ChatClient(BaseChatClient):
                 return
 
             video_url = parts[1].strip()
+
             # 유효한 URL인지 확인
             if not is_valid_url(video_url):
                 await self.send_chat(youtubeConst.Message.INVALID_URL.format(video_url))
@@ -110,8 +111,16 @@ class ChatClient(BaseChatClient):
                 if len(times) > 1:
                     end_time = parse_time(times[1])
 
+            # 특정 아티스트의 곡을 받기 위한 키워드
+            is_keyword = self.tk_vars[const.FunctionName.KEYWORD].get()
+            keyword = self.tk_vars["keyword"].get() if is_keyword else None
+
             result: str = self.youtube_player.execute_video_request(
-                video_url, start_time, end_time, nickname
+                video_url,
+                start_time,
+                end_time,
+                nickname,
+                keyword,
             )
             await self.send_chat(result)
         except ValueError as ve:

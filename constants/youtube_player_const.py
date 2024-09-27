@@ -58,6 +58,11 @@ class Message:
     )
     SKIP_VOTE_OFF = f"{Prefix.RESPONSE_PREFIX} 스킵 투표기능이 꺼져 있습니다"
 
+    # 키워드가 포함되지 않은 경우
+    NO_KEYWORD = (
+        f"{Prefix.RESPONSE_PREFIX} 키워드가 포함되지 않은 영상입니다 (키워드: {{}})"
+    )
+
 
 class Status:
     SUCCESS = "SUCCESS"

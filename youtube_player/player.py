@@ -39,75 +39,87 @@ class YoutubePlayer:
         start_time: timedelta | None,
         end_time: timedelta | None,
         nickname: str,
+        keyword: str | None,
     ) -> str:
+        try:
 
-        # 사용자 신청 횟수 확인
-        if nickname in self.user_request_cnt:
-            if self.user_request_cnt[nickname] >= MAX_REQUESTS:
-                return Message.REQUEST_LIMIT_REACHED.format(nickname, MAX_REQUESTS)
-        else:
-            self.user_request_cnt[nickname] = 0
-
-        video_id = self.extract_video_id(video_url)
-        if not video_id:
-            return Message.INVALID_URL.format(video_url)
-
-        status, video_title, channel_title, duration_str = self.get_video_info(video_id)
-        if status == Status.ERROR:
-            return Message.SEARCH_ERROR
-        if status == Status.NOT_FOUND:
-            return Message.NOT_FOUND.format()
-
-        if channel_title in BANNED_CHANNEL_TITLE:
-            return Message.REQUEST_BANNED_CHANNEL.format(channel_title)
-
-        if any(keyword in video_title for keyword in BANNED_KEYWORDS):
-            return Message.REQUEST_BANNED_KEYWORD.format(video_title)
-
-        s_t = timedelta(0)
-        duration = self.parse_duration(duration_str)
-        min_time = timedelta(seconds=10)
-        if start_time is not None:
-            s_t = start_time
-            if end_time is not None:
-                e_t = end_time
-                d_t = e_t - s_t
-                if d_t.total_seconds() < min_time.total_seconds():
-                    return Message.INVALID_TIME.format(
-                        "영상 길이가 너무 짧습니다. (최소 10초)"
-                    )
-                if d_t.total_seconds() > duration.total_seconds():
-                    return Message.INVALID_TIME.format(
-                        "종료시간이 영상 길이보다 큽니다"
-                    )
-                duration = d_t
+            # 사용자 신청 횟수 확인
+            if nickname in self.user_request_cnt:
+                if self.user_request_cnt[nickname] >= MAX_REQUESTS:
+                    return Message.REQUEST_LIMIT_REACHED.format(nickname, MAX_REQUESTS)
             else:
-                if s_t.total_seconds() >= duration.total_seconds():
-                    return Message.INVALID_TIME.format(
-                        "시작시간이 영상 길이보다 큽니다."
-                    )
-                duration = duration - s_t
+                self.user_request_cnt[nickname] = 0
 
-        video = Video(
-            video_id,
-            video_title,
-            channel_title,
-            s_t,
-            duration,
-            nickname,
-            video_url,
-        )
-        self.add_video_to_list(video)
+            video_id = self.extract_video_id(video_url)
 
-        # video_title의 길이 제한
-        if len(video_title) > MAX_TITLE_LENGTH:
-            video_title = video_title[:MAX_TITLE_LENGTH] + "..."
+            if not video_id:
+                return Message.INVALID_URL.format(video_url)
 
-        return Message.REQUEST_SUCCESS.format(
-            f"{video_title} | {channel_title} ({duration})",
-            self.user_request_cnt[nickname],
-            MAX_REQUESTS,
-        )
+            status, video_title, channel_title, duration_str = self.get_video_info(
+                video_id
+            )
+            if status == Status.ERROR:
+                return Message.SEARCH_ERROR
+            if status == Status.NOT_FOUND:
+                return Message.NOT_FOUND.format(video_url)
+
+            if channel_title in BANNED_CHANNEL_TITLE:
+                return Message.REQUEST_BANNED_CHANNEL.format(video_url)
+
+            if any(keyword in video_title for keyword in BANNED_KEYWORDS):
+                return Message.REQUEST_BANNED_KEYWORD.format(video_title)
+
+            # 키워드가 None이 아니면, 특정 키워드가 포함된 영상만 신청 가능
+            if keyword is not None and keyword not in video_title:
+                return Message.NO_KEYWORD.format(keyword)
+
+            s_t = timedelta(0)
+            duration = self.parse_duration(duration_str)
+            min_time = timedelta(seconds=10)
+            if start_time is not None:
+                s_t = start_time
+                if end_time is not None:
+                    e_t = end_time
+                    d_t = e_t - s_t
+                    if d_t.total_seconds() < min_time.total_seconds():
+                        return Message.INVALID_TIME.format(
+                            "영상 길이가 너무 짧습니다. (최소 10초)"
+                        )
+                    if d_t.total_seconds() > duration.total_seconds():
+                        return Message.INVALID_TIME.format(
+                            "종료시간이 영상 길이보다 큽니다"
+                        )
+                    duration = d_t
+                else:
+                    if s_t.total_seconds() >= duration.total_seconds():
+                        return Message.INVALID_TIME.format(
+                            "시작시간이 영상 길이보다 큽니다."
+                        )
+                    duration = duration - s_t
+
+            video = Video(
+                video_id,
+                video_title,
+                channel_title,
+                s_t,
+                duration,
+                nickname,
+                video_url,
+            )
+            self.add_video_to_list(video)
+
+            # video_title의 길이 제한
+            if len(video_title) > MAX_TITLE_LENGTH:
+                video_title = video_title[:MAX_TITLE_LENGTH] + "..."
+
+            return Message.REQUEST_SUCCESS.format(
+                f"{video_title} | {channel_title} ({duration})",
+                self.user_request_cnt[nickname],
+                MAX_REQUESTS,
+            )
+        except Exception as e:
+            print(f"Error in execute_video_request: {e}")
+            return Message.REQUEST_ERROR
 
     def extract_video_id(self, url: str) -> str | None:
         parsed_url = urlparse(url)

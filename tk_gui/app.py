@@ -37,13 +37,36 @@ class App:
         self.root.columnconfigure(1, weight=1)
         self.root.columnconfigure(2, weight=1)
 
-        row = 0
+        row, column = 0, 0
 
         # 명령어 별 기능 토글
         # 니코동 채팅, 유튜브, 인사말, 스킵 투표
         for name, var in self.tk_vars.items():
-            self.create_checkbutton(row, 1, 1, f"{name} ON/OFF", var)
-            row += 1
+            if name == "keyword":
+                # 키워드는 따로 처리
+                continue
+            if column >= 3:
+                column = 0
+                row += 1
+            self.create_checkbutton(row, column, 1, f"{name} ON/OFF", var)
+            column += 1
+
+        row += 1
+
+        # 키워드 입력 박스
+        self.create_label(row, 1, 1, "키워드 입력")
+        row += 1
+        self.keyword_entry = tk.Entry(self.root)
+        self.keyword_entry.grid(
+            row=row, column=0, columnspan=2, padx=10, pady=10, sticky="ew"
+        )
+
+        # 키워드 변경 버튼
+        self.create_action_button(
+            row, 2, gui_const.GuiLabel.UPDATE_KEYWORD, self.update_keyword
+        )
+
+        row += 1
 
         # 브라우저 소스 관련 버튼들
         self.create_action_button(
@@ -92,6 +115,11 @@ class App:
             row, 2, gui_const.GuiLabel.DELETE_VIDEO, self.remove_selected_video
         )
 
+    def update_keyword(self):
+        keyword = self.keyword_entry.get()
+        self.tk_vars["keyword"].set(keyword)
+        print(f"Keyword updated: {keyword}")
+
     def create_action_button(self, row, column, text, command):
         button = tk.Button(self.root, text=text, command=command)
         button.grid(row=row, column=column, padx=10, pady=10, sticky="ew")
@@ -100,7 +128,7 @@ class App:
     def create_checkbutton(self, row, column, colspan, text, variable):
         checkbutton = tk.Checkbutton(self.root, text=text, variable=variable)
         checkbutton.grid(
-            row=row, column=column, columnspan=colspan, padx=10, pady=10, sticky="ew"
+            row=row, column=column, columnspan=colspan, padx=5, pady=5, sticky="ew"
         )
         return checkbutton
 

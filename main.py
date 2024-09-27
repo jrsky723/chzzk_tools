@@ -40,8 +40,9 @@ def main():
     tk_vars = {
         FunctionName.NICO_CHAT: tk.BooleanVar(value=True),
         FunctionName.YOUTUBE: tk.BooleanVar(value=True),
-        FunctionName.HELLO: tk.BooleanVar(value=True),
         FunctionName.SKIP_VOTE: tk.BooleanVar(value=True),
+        FunctionName.KEYWORD: tk.BooleanVar(value=True),
+        "keyword": tk.StringVar(),
     }
     nico_chat, youtube_player, chzzk_cl = init_clients(tk_vars)
 
