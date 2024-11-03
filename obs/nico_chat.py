@@ -86,9 +86,9 @@ class NicoChat:
     async def move_text_left(
         self, scene_name: str, item_id: int, text: str, initial_x: int, initial_y: int
     ) -> None:
-        base_step: float = 5
+        base_step: float = 2
         text_length: int = len(text)
-        step: float = base_step + text_length / 5  # 글자 수에 따라 이동 속도 조절
+        step: float = base_step + text_length / 20  # 글자 수에 따라 이동 속도 조절
 
         current_x: float = initial_x
 
@@ -108,7 +108,7 @@ class NicoChat:
                 },
             )
             start_time = time.perf_counter()
-            while time.perf_counter() - start_time < 0.01:
+            while time.perf_counter() - start_time < 0.004:
                 await asyncio.sleep(0)
 
         # 이동이 끝나면 삭제
