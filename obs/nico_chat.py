@@ -88,7 +88,8 @@ class NicoChat:
     ) -> None:
         base_step: float = 2
         text_length: int = len(text)
-        step: float = base_step + text_length / 20  # 글자 수에 따라 이동 속도 조절
+        step: float = base_step
+        # + text_length / 20  # 글자 수에 따라 이동 속도 조절
 
         current_x: float = initial_x
 
