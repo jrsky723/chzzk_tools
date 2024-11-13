@@ -132,6 +132,8 @@ class YoutubePlayer:
                 return parsed_url.path.split("/")[2]
             if parsed_url.path.startswith("/shorts/"):
                 return parsed_url.path.split("/")[2]
+            if parsed_url.path.startswith("/live/"):
+                return parsed_url.path.split("/")[2]
         elif parsed_url.hostname in ["youtu.be"]:
             return parsed_url.path[1:]
         return None
